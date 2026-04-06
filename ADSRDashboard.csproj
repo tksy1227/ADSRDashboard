@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ADSRDashboard</AssemblyName>
+    <RootNamespace>ADSRDashboard</RootNamespace>
+    <StartupObject>ADSRDashboard.Program</StartupObject>
+  </PropertyGroup>
+
+  <!-- Copy all images to output directory so LoadImg() can find them at runtime -->
+  <ItemGroup>
+    <Content Include="images\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
