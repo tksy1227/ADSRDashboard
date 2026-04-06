@@ -1,10 +1,19 @@
-# ADSR Dashboard – WinForms Prototype  (v6)
+# ADSR Dashboard – WinForms Prototype (v6)
 
 All v5 review points addressed. Targets 1920x1080 maximised.
 
-## Run
+## Prerequisites
+* **Operating System**: Windows (Required for Windows Forms)
+* **SDK**: [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) or newer
+
+## Getting Started
+
+### Option 1: Clone the Repository
+If you have Git installed, run the following commands:
+
 ```bash
-cd ADSRDashboard_v6
+git clone https://github.com/YOUR_USERNAME/ADSRDashboard.git
+cd ADSRDashboard
 dotnet run
 ```
 
