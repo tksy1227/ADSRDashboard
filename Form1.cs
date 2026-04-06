@@ -52,6 +52,7 @@ namespace ADSRDashboard
         // ── Bin hover / click ─────────────────────────────────────────────────
         Form?   _hoverPopup  = null;
         Button? _clickedBin  = null;
+        Color   _clickedBinOriginalColor;
         bool    _isHoverLock = false;
 
         // ── Layout reference: binPanel is needed by AlertCenter resize ─────────
@@ -1021,41 +1022,68 @@ namespace ADSRDashboard
 
         void BinClick(Button btn)
         {
-            if (btn.BackColor == C_RED) return;
-            if (_isHoverLock && _clickedBin == btn) { _isHoverLock = false; _clickedBin = null; DismissHoverPopup(); }
-            else { _isHoverLock = true; _clickedBin = btn; ShowBinDetail(btn); }
+            if (btn.BackColor == C_RED) return; // Red bins are non-interactive
+
+            if (_isHoverLock && _clickedBin == btn)
+            {
+                // Case 1: User clicks the *same* bin that is currently locked/clicked.
+                // This means "un-click" it.
+                _isHoverLock = false;
+                if (_clickedBin != null)
+                {
+                    _clickedBin.BackColor = _clickedBinOriginalColor; // Restore original color
+                    _clickedBin.Invalidate(); // Force redraw
+                }
+                _clickedBin = null;
+                DismissHoverPopup();
+            }
+            else
+            {
+                // Case 2: User clicks a *different* bin, or clicks an un-locked bin.
+                // First, if there was a previously clicked bin, restore its color.
+                if (_clickedBin != null)
+                {
+                    _clickedBin.BackColor = _clickedBinOriginalColor;
+                    _clickedBin.Invalidate(); // Force redraw
+                }
+
+                // Now, set the new bin as clicked.
+                _isHoverLock = true;
+                _clickedBin = btn;
+                _clickedBinOriginalColor = btn.BackColor; // Store the original color of the *newly* clicked bin
+                btn.BackColor = DarkenColor(btn.BackColor, 15); // Darken the new clicked bin by 15%
+                btn.Invalidate(); // Force redraw
+
+                ShowBinDetail(btn);
+            }
         }
 
         void ShowBinDetail(Button btn)
         {
             // Always close any existing popup first
             if (_hoverPopup != null) DismissHoverPopup();
-
             string id = btn.Tag?.ToString() ?? "";
             string titleText = id;
             string infoText = "";
 
-            // Check if bin is empty (C_BIN_EMPTY)
-            bool isEmpty = (btn.BackColor == C_BIN_EMPTY);
-
-            if (isEmpty)
+            if (btn.BackColor == C_GREEN)
             {
-                titleText = "PRODUCT ID";
-                infoText = "No item is setup for this bin.";
+                infoText = "[ 60 ] PARACETAMOL 500MG TABLET 10s\r\n\r\n" +
+                           "Article ID / Item ID\r\n0004-28-038-G001000A-S\r\n0004-28-038-G\r\n\r\n" +
+                           "Batch No / Expiry Date\r\n00BNO49494 (05/11/2026)\r\n\r\n\r\n" +
+                           "[ 180 ] PARACETAMOL 500MG TABLET 10s\r\n\r\n" +
+                           "Article ID / Item ID\r\n0004-28-038-G001000A-S\r\n0004-28-038-G\r\n\r\n" +
+                           "Batch No / Expiry Date\r\n00BNO49499 (25/12/2026)";
             }
             else
             {
-                var rng = new Random((id + "d").GetHashCode() & 0x7fffffff);
-                int qty = (rng.Next(4) + 1) * 30;
-                string drug = rng.Next(2) == 0 ? "PARACETAMOL 500MG TABLET 10s" : "AMOXICILLIN 250MG CAPSULE 14s";
-                string batch = $"00BNO{rng.Next(40000, 60000)} ({rng.Next(1, 13):D2}/{rng.Next(26, 30):D2}/2026)";
-                infoText = $"[ {qty} ] {drug}\r\n\r\nArticle ID / Item ID\r\n0004-28-038-G001000A-S\r\n\r\nBatch No / Expiry Date\r\n{batch}";
+                infoText = "No item is setup for this bin.";
             }
 
             // Use a borderless Form as the popup host so it can float above everything
             // Key fix: DON'T set ShowInTaskbar or wire Deactivate — instead use a timer-based
             // dismiss on mouse-leave so the X button always fires before dismiss.
-            int popW = 330, popH = 200;
+            int popW = 330, popH = 420;
 
             var popup = new Form
             {
@@ -1096,7 +1124,7 @@ namespace ADSRDashboard
             {
                 Text = infoText,
                 Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(195, 200, 215),
-                Location = new Point(14, 36), Size = new Size(300, 152)
+                Location = new Point(14, 36), Size = new Size(300, 370)
             };
 
             // X button — explicitly close and clear state, no race with Deactivate
@@ -1376,6 +1404,20 @@ namespace ADSRDashboard
             for (int i = 0; i < 6; i++) { double a = Math.PI / 180.0 * (60 * i - 30); pts[i] = new PointF(c.X + r * (float)Math.Cos(a), c.Y + r * (float)Math.Sin(a)); }
             return pts;
         }
+
+        /// <summary>
+        /// Returns a darker version of the specified color.
+        /// </summary>
+        /// <param name="color">The original color.</param>
+        /// <param name="percent">The percentage to darken (e.g., 15 for 15%).</param>
+        /// <returns>A new Color instance that is darker than the original.</returns>
+        Color DarkenColor(Color color, int percent)
+        {
+            percent = Math.Max(0, Math.Min(100, percent)); // Clamp percent between 0 and 100
+            float factor = 1f - (float)percent / 100f;
+            return Color.FromArgb(color.A, (int)(color.R * factor), (int)(color.G * factor), (int)(color.B * factor));
+        }
+
 
         static GraphicsPath RoundedRect(Rectangle r, int rad)
         {
