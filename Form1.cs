@@ -354,17 +354,45 @@ namespace ADSRDashboard
 
             if (beeImg != null)
             {
-                int bw = _stopOverlay.Width / 2, bh = _stopOverlay.Height / 2;
+                int bw = _stopOverlay.Width / 2;
+                int bh = _stopOverlay.Height / 2;
+                
                 var beePic = new PictureBox
                 {
                     SizeMode  = PictureBoxSizeMode.Zoom,
                     Image     = beeImg,
                     BackColor = Color.Transparent,
                     Size      = new Size(bw, bh),
-                    Location  = new Point((_stopOverlay.Width - bw) / 2, (_stopOverlay.Height - bh) / 2),
+                    Location  = new Point(_stopOverlay.Width, -bh), // Start off-screen top-right
                     Enabled   = false
                 };
                 _stopOverlay.Controls.Add(beePic);
+
+                // Floating animation timer
+                var animTimer = new System.Windows.Forms.Timer { Interval = 16 }; // ~60 FPS
+                int step = 0;
+                const int totalSteps = 45; // ~0.75 seconds
+                Point startPos = beePic.Location;
+
+                animTimer.Tick += (s, e) =>
+                {
+                    if (_stopOverlay == null || beePic.IsDisposed) { animTimer.Stop(); animTimer.Dispose(); return; }
+
+                    step++;
+                    float t = (float)step / totalSteps;
+                    int targetX = (_stopOverlay.Width - bw) / 2;
+                    int targetY = (_stopOverlay.Height - bh) / 2;
+
+                    if (t >= 1.0f) {
+                        beePic.Location = new Point(targetX, targetY);
+                        animTimer.Stop(); animTimer.Dispose();
+                    } else {
+                        float ease = 1f - (float)Math.Pow(1f - t, 3); // Cubic ease-out for smooth landing
+                        beePic.Left = (int)(startPos.X + (targetX - startPos.X) * ease);
+                        beePic.Top  = (int)(startPos.Y + (targetY - startPos.Y) * ease + (Math.Sin(t * 12) * 25 * (1 - t)));
+                    }
+                };
+                animTimer.Start();
             }
             else
             {
