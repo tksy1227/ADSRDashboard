@@ -690,10 +690,14 @@ namespace ADSRDashboard
                 // Divider in centre
                 divider.SetBounds(mid - 1, 6, 2, frame.Height - 12);
                 // System Health on the RIGHT
-                lblSHTitle.Location = new Point(mid + 14, 4);
-                chipMAP.Location    = new Point(mid + 14,  20);
-                chipIWEA.Location   = new Point(mid + 140, 20);
-                chipPLC.Location    = new Point(mid + 266, 20);
+                const int cW = 185, gap = 4;
+                int sX = mid + 8;
+                chipMAP.Location    = new Point(sX, 18);
+                chipIWEA.Location   = new Point(sX + cW + gap, 18);
+                chipPLC.Location    = new Point(sX + 2 * (cW + gap), 18);
+
+                int totalW = (3 * cW) + (2 * gap);
+                lblSHTitle.Location = new Point(sX + (totalW / 2) - (lblSHTitle.PreferredWidth / 2), 4);
             };
 
             strip.Controls.Add(frame);
@@ -703,7 +707,7 @@ namespace ADSRDashboard
 
         PictureBox MakeHealthChip(string imgDown, string imgUp, bool ok)
         {
-            var pic = new PictureBox { Size = new Size(159, 30), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent };
+            var pic = new PictureBox { Size = new Size(185, 38), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent };
             var img = LoadImg(ok ? imgUp : imgDown); if (img != null) pic.Image = img;
             return pic;
         }
@@ -979,7 +983,8 @@ namespace ADSRDashboard
                 Text = label, Font = new Font("Segoe UI", w > 50 ? 7.5f : 6.5f),
                 ForeColor = dk ? Color.White : C_TEXT_DARK, BackColor = bg,
                 FlatStyle = FlatStyle.Flat, Size = new Size(w, h), Cursor = Cursors.Hand,
-                Tag = label, TextAlign = ContentAlignment.MiddleCenter
+                Tag = (label, bg),   // store both label AND original colour
+                TextAlign = ContentAlignment.MiddleCenter
             };
             btn.FlatAppearance.BorderSize  = 1;
 
@@ -1050,7 +1055,9 @@ namespace ADSRDashboard
                 // Now, set the new bin as clicked.
                 _isHoverLock = true;
                 _clickedBin = btn;
-                _clickedBinOriginalColor = btn.BackColor; // Store the original color of the *newly* clicked bin
+                // Read original colour from tag tuple
+                var (_, origColor) = ((string, Color))btn.Tag!;
+                _clickedBinOriginalColor = origColor;                
                 btn.BackColor = DarkenColor(btn.BackColor, 15); // Darken the new clicked bin by 15%
                 btn.Invalidate(); // Force redraw
 
@@ -1062,11 +1069,12 @@ namespace ADSRDashboard
         {
             // Always close any existing popup first
             if (_hoverPopup != null) DismissHoverPopup();
-            string id = btn.Tag?.ToString() ?? "";
-            string titleText = id;
+            var (binId, origColor) = btn.Tag is (string s, Color c) ? (s, c) : (btn.Tag?.ToString() ?? "", C_BIN_EMPTY);
+            
             string infoText = "";
+            int popW = 330, popH = 350;
 
-            if (btn.BackColor == C_GREEN)
+            if (origColor == C_GREEN)
             {
                 infoText = "[ 60 ] PARACETAMOL 500MG TABLET 10s\r\n\r\n" +
                            "Article ID / Item ID\r\n0004-28-038-G001000A-S\r\n0004-28-038-G\r\n\r\n" +
@@ -1078,13 +1086,12 @@ namespace ADSRDashboard
             else
             {
                 infoText = "No item is setup for this bin.";
+                popH = 100; // Smaller height for Pending Setup
             }
 
             // Use a borderless Form as the popup host so it can float above everything
             // Key fix: DON'T set ShowInTaskbar or wire Deactivate — instead use a timer-based
             // dismiss on mouse-leave so the X button always fires before dismiss.
-            int popW = 330, popH = 420;
-
             var popup = new Form
             {
                 FormBorderStyle = FormBorderStyle.None,
@@ -1116,7 +1123,7 @@ namespace ADSRDashboard
 
             var lblId   = new Label
             {
-                Text = titleText + (_isHoverLock && _clickedBin == btn ? "  📌" : ""),
+                Text = binId + (_isHoverLock && _clickedBin == btn ? "  📌" : ""),
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
                 ForeColor = Color.White, AutoSize = true, Location = new Point(14, 12)
             };
@@ -1124,7 +1131,7 @@ namespace ADSRDashboard
             {
                 Text = infoText,
                 Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(195, 200, 215),
-                Location = new Point(14, 36), Size = new Size(300, 370)
+                Location = new Point(14, 36), Size = new Size(300, popH - 50)
             };
 
             // X button — explicitly close and clear state, no race with Deactivate

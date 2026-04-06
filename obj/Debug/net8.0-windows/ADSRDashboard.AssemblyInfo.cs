@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ADSRDashboard")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f0edcfcf741cf18b44d216a5b64c68dc498029b0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e9142e8b3e9573328d4568d52944b34b7cfdafed")]
 [assembly: System.Reflection.AssemblyProductAttribute("ADSRDashboard")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ADSRDashboard")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
