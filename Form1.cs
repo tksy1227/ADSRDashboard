@@ -34,6 +34,10 @@ namespace ADSRDashboard
         ComboBox? _cmbView;
         Panel?    _pnlBinGrid;
         Panel?    _gearPanel;
+        Label?    _lblCountPending;
+        Label?    _lblCountInOp;
+        Label?    _lblCountDisabled;
+        int       _cntPending, _cntInOp, _cntDisabled;
         Panel?    _alertScroll;
         Panel?    _warnScroll;
 
@@ -797,14 +801,18 @@ namespace ADSRDashboard
             _cmbView.SelectedIndex = 0;
             _cmbView.SelectedIndexChanged += (s, e) => RefreshBinGrid();
 
-            int sx = 290;
-            var badge1 = MakeStatBadge("108", "Pending Setup", C_RED,                              ref sx);
-            var badge2 = MakeStatBadge("40",  "In Operation",  C_GREEN,                            ref sx);
-            var badge3 = MakeStatBadge("20",  "Disabled",      Color.FromArgb(148, 153, 165),      ref sx);
+            int dx = 0;
+            var badge1 = MakeStatBadge("0", "Pending Setup", C_BIN_EMPTY, ref dx);
+            _lblCountPending = (Label)badge1[0];
+            var badge2 = MakeStatBadge("0", "In Operation",  C_GREEN,                       ref dx);
+            _lblCountInOp = (Label)badge2[0];
+            var badge3 = MakeStatBadge("0", "Disabled",      C_RED,                         ref dx);
+            _lblCountDisabled = (Label)badge3[0];
+
+            var badgeGroups = new[] { badge1, badge2, badge3 };
             subHdr.Controls.Add(robotPic); subHdr.Controls.Add(_cmbView);
-            foreach (var c in badge1) subHdr.Controls.Add(c);
-            foreach (var c in badge2) subHdr.Controls.Add(c);
-            foreach (var c in badge3) subHdr.Controls.Add(c);
+            foreach (var group in badgeGroups)
+                foreach (var c in group) subHdr.Controls.Add(c);
 
             // ── Dark bin grid panel ────────────────────────────────────────────
             _pnlBinGrid = new Panel { BackColor = C_BIN_DARK, AutoScroll = false, Padding = new Padding(12, 6, 12, 6) };
@@ -851,6 +859,19 @@ namespace ADSRDashboard
                 // Sub-header sits inside the adm_top strip
                 subHdr.SetBounds(lRail, 2, pw - lRail - rRail, HDR_H - 2);
 
+                // Position badges to lean right
+                int totalBadgeW = 0;
+                foreach (var g in badgeGroups) 
+                    totalBadgeW += 44 + ((Label)g[1]).PreferredWidth + 20;
+                
+                int curX = subHdr.Width - totalBadgeW;
+                foreach (var g in badgeGroups)
+                {
+                    g[0].Left = curX;
+                    g[1].Left = curX + 44;
+                    curX += 44 + ((Label)g[1]).PreferredWidth + 20;
+                }
+
                 // Bin grid fills the dark inner area — constrained to adm_bottom's grey box
                 _pnlBinGrid!.SetBounds(lRail, HDR_H, pw - lRail - rRail, ph - HDR_H - BOT_P);
 
@@ -877,10 +898,15 @@ namespace ADSRDashboard
             _pnlBinGrid.SuspendLayout();
             _pnlBinGrid.Controls.Clear();
             DismissHoverPopup(); _clickedBin = null; _isHoverLock = false;
+            _cntPending = 0; _cntInOp = 0; _cntDisabled = 0;
 
             string sel = _cmbView?.SelectedItem?.ToString() ?? "Front Physical Bin View";
             if (sel.StartsWith("Virtual")) RenderVirtualBins();
             else RenderPhysicalBins(sel.StartsWith("Back") ? "B" : "F");
+
+            if (_lblCountPending != null)  _lblCountPending.Text  = _cntPending.ToString();
+            if (_lblCountInOp != null)     _lblCountInOp.Text     = _cntInOp.ToString();
+            if (_lblCountDisabled != null) _lblCountDisabled.Text = _cntDisabled.ToString();
 
             _pnlBinGrid.ResumeLayout(true);
         }
@@ -945,7 +971,7 @@ namespace ADSRDashboard
         {
             var rng  = new Random(label.GetHashCode() & 0x7fffffff);
             int pick = rng.Next(10);
-            Color bg = pick < 4 ? C_RED : pick < 7 ? C_GREEN : pick < 8 ? Color.FromArgb(115, 120, 132) : C_BIN_EMPTY;
+            Color bg = pick < 4 ? C_RED : pick < 7 ? C_GREEN : C_BIN_EMPTY;
             bool dk  = bg != C_BIN_EMPTY;
             var btn  = new Button
             {
@@ -955,6 +981,11 @@ namespace ADSRDashboard
                 Tag = label, TextAlign = ContentAlignment.MiddleCenter
             };
             btn.FlatAppearance.BorderSize  = 1;
+
+            if (bg == C_RED) _cntDisabled++;
+            else if (bg == C_GREEN) _cntInOp++;
+            else _cntPending++; // Counts light grey (C_BIN_EMPTY) bins
+
             btn.FlatAppearance.BorderColor = Color.FromArgb(65, 69, 82);
             btn.MouseEnter += (s, e) => BinMouseEnter(btn);
             btn.MouseLeave += (s, e) => BinMouseLeave(btn);
@@ -963,7 +994,16 @@ namespace ADSRDashboard
         }
 
         // ── Bin hover / click ──────────────────────────────────────────────────
-        void BinMouseEnter(Button btn) { if (_isHoverLock && _clickedBin != btn) return; ShowBinDetail(btn); }
+        void BinMouseEnter(Button btn) 
+        { 
+            if (btn.BackColor == C_RED) 
+            { 
+                if (!_isHoverLock) DismissHoverPopup();
+                return; 
+            }
+            if (_isHoverLock && _clickedBin != btn) return; 
+            ShowBinDetail(btn); 
+        }
 
         void BinMouseLeave(Button btn)
         {
@@ -981,6 +1021,7 @@ namespace ADSRDashboard
 
         void BinClick(Button btn)
         {
+            if (btn.BackColor == C_RED) return;
             if (_isHoverLock && _clickedBin == btn) { _isHoverLock = false; _clickedBin = null; DismissHoverPopup(); }
             else { _isHoverLock = true; _clickedBin = btn; ShowBinDetail(btn); }
         }
@@ -991,10 +1032,25 @@ namespace ADSRDashboard
             if (_hoverPopup != null) DismissHoverPopup();
 
             string id = btn.Tag?.ToString() ?? "";
-            var rng   = new Random((id + "d").GetHashCode() & 0x7fffffff);
-            int qty   = (rng.Next(4) + 1) * 30;
-            string drug  = rng.Next(2) == 0 ? "PARACETAMOL 500MG TABLET 10s" : "AMOXICILLIN 250MG CAPSULE 14s";
-            string batch = $"00BNO{rng.Next(40000, 60000)} ({rng.Next(1, 13):D2}/{rng.Next(26, 30):D2}/2026)";
+            string titleText = id;
+            string infoText = "";
+
+            // Check if bin is empty (C_BIN_EMPTY)
+            bool isEmpty = (btn.BackColor == C_BIN_EMPTY);
+
+            if (isEmpty)
+            {
+                titleText = "PRODUCT ID";
+                infoText = "No item is setup for this bin.";
+            }
+            else
+            {
+                var rng = new Random((id + "d").GetHashCode() & 0x7fffffff);
+                int qty = (rng.Next(4) + 1) * 30;
+                string drug = rng.Next(2) == 0 ? "PARACETAMOL 500MG TABLET 10s" : "AMOXICILLIN 250MG CAPSULE 14s";
+                string batch = $"00BNO{rng.Next(40000, 60000)} ({rng.Next(1, 13):D2}/{rng.Next(26, 30):D2}/2026)";
+                infoText = $"[ {qty} ] {drug}\r\n\r\nArticle ID / Item ID\r\n0004-28-038-G001000A-S\r\n\r\nBatch No / Expiry Date\r\n{batch}";
+            }
 
             // Use a borderless Form as the popup host so it can float above everything
             // Key fix: DON'T set ShowInTaskbar or wire Deactivate — instead use a timer-based
@@ -1032,13 +1088,13 @@ namespace ADSRDashboard
 
             var lblId   = new Label
             {
-                Text = id + (_isHoverLock && _clickedBin == btn ? "  📌" : ""),
+                Text = titleText + (_isHoverLock && _clickedBin == btn ? "  📌" : ""),
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
                 ForeColor = Color.White, AutoSize = true, Location = new Point(14, 12)
             };
             var lblInfo = new Label
             {
-                Text = $"[ {qty} ] {drug}\r\n\r\nArticle ID / Item ID\r\n0004-28-038-G001000A-S\r\n\r\nBatch No / Expiry Date\r\n{batch}",
+                Text = infoText,
                 Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(195, 200, 215),
                 Location = new Point(14, 36), Size = new Size(300, 152)
             };
