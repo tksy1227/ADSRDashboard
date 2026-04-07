@@ -166,7 +166,7 @@ namespace ADSRDashboard
             if (topBorderImg != null) headerBg.Image = topBorderImg;
 
             // ── Logo: dashboard_m_l.png (falls back to drawn GHT hex) ──────────
-            var logo = new Panel { Size = new Size(44, 44), Location = new Point(14, 18), BackColor = Color.Transparent };
+            var logo = new Panel { Size = new Size(60, 60), Location = new Point(14, 10), BackColor = Color.Transparent };
             var dashLogoImg = LoadImg("dashboard_m_l.png");
             if (dashLogoImg != null)
             {
@@ -184,50 +184,73 @@ namespace ADSRDashboard
             // Removed as per supervisor's reference
 
             // ── Control group: [Fan] [Light] [Stop] ──────────────────────────
-            var ctrlGroup = new Panel { Size = new Size(232, 60), BackColor = Color.FromArgb(228, 231, 238) };
-            ctrlGroup.Paint += (s, e) =>
+            // ── Fan/Light shared container ──────────────────────────────────
+            var flGroup = new Panel { Size = new Size(204, 55), BackColor = Color.FromArgb(228, 231, 238) };
+            flGroup.Paint += (s, e) =>
             {
+                var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+                using var path = RoundedRect(new Rectangle(0, 0, flGroup.Width - 1, flGroup.Height - 1), 8);
                 using var pen = new Pen(C_BORDER, 1);
-                e.Graphics.DrawRectangle(pen, 0, 0, ctrlGroup.Width - 1, ctrlGroup.Height - 1);
-                e.Graphics.DrawLine(pen, 76,  4, 76,  ctrlGroup.Height - 4);
-                e.Graphics.DrawLine(pen, 152, 4, 152, ctrlGroup.Height - 4);
+                g.DrawPath(pen, path);
+                // Vertical separator line between Fan and Light buttons
+                g.DrawLine(pen, 102, 4, 102, flGroup.Height - 4);
             };
-            var btnFan   = MakeImgCtrlSlot("fan",   0,   ctrlGroup);
+            using (var path = RoundedRect(new Rectangle(0, 0, 204, 55), 8)) flGroup.Region = new Region(path);
+
+            var btnFan   = MakeImgCtrlSlot("fan",   0,   flGroup);
             _btnFanCtrl  = btnFan;   // store ref so fan popup can update the icon
-            var btnLight = MakeImgCtrlSlot("light", 76,  ctrlGroup);
-            var btnStop  = MakeImgCtrlSlot("stop",  152, ctrlGroup);
-            ctrlGroup.Controls.AddRange(new Control[] { btnFan, btnLight, btnStop });
+            var btnLight = MakeImgCtrlSlot("light", 102, flGroup);
+            flGroup.Controls.AddRange(new Control[] { btnFan, btnLight });
+
+            // ── Stop container (separate) ───────────────────────────────────
+            var stopGroup = new Panel { Size = new Size(55, 55), BackColor = Color.FromArgb(228, 231, 238) };
+            stopGroup.Paint += (s, e) =>
+            {
+                var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+                using var path = RoundedRect(new Rectangle(0, 0, stopGroup.Width - 1, stopGroup.Height - 1), 8);
+                using var pen = new Pen(C_BORDER, 1);
+                g.DrawPath(pen, path);
+            };
+            using (var path = RoundedRect(new Rectangle(0, 0, 55, 55), 8)) stopGroup.Region = new Region(path);
+
+            var btnStop = MakeImgCtrlSlot("stop", 0, stopGroup);
+            stopGroup.Controls.Add(btnStop);
+
+            // ── Divider between Stop and Avatar ──────────────────────────────
+            var stopAvatarSep = new Panel { Size = new Size(1, 44), BackColor = C_BORDER };
 
             // ── Avatar + user block ───────────────────────────────────────────
-            var avatar = new Panel { Size = new Size(44, 44), BackColor = Color.Transparent };
+            var avatar = new Panel { Size = new Size(52, 52), BackColor = Color.Transparent };
             avatar.Paint += (s, e) =>
             {
                 var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
                 using var br = new SolidBrush(Color.FromArgb(65, 125, 195));
-                g.FillEllipse(br, 0, 0, 43, 43);
+                g.FillEllipse(br, 0, 0, 51, 51);
                 using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                g.DrawString("GU", new Font("Segoe UI", 13f, FontStyle.Bold), Brushes.White, new RectangleF(0, 0, 44, 44), sf);
+                g.DrawString("GU", new Font("Segoe UI", 15f, FontStyle.Bold), Brushes.White, new RectangleF(0, 0, 52, 52), sf);
             };
             var lblWelcome = new Label { Text = "Welcome",                                      Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = C_TEXT_DARK, AutoSize = true };
             _lblClock      = new Label { Text = DateTime.Now.ToString("d MMM yyyy   HH:mm:ss"), Font = new Font("Segoe UI", 8.5f),                  ForeColor = C_TEXT_MID,  AutoSize = true };
             var lblVer     = new Label { Text = "ASRS (GUI v1.0.00)",                           Font = new Font("Segoe UI", 8f),                    ForeColor = C_TEXT_MID,  AutoSize = true };
 
-            p.Controls.AddRange(new Control[] { logo, ctrlGroup, avatar, lblWelcome, _lblClock, lblVer });
+            p.Controls.AddRange(new Control[] { logo, flGroup, stopGroup, stopAvatarSep, avatar, lblWelcome, _lblClock, lblVer });
             // Add background image LAST so it sits at the bottom of the Z-stack
             p.Controls.Add(headerBg);
             p.Resize += (s, e) =>
             {
                 // Stretch background to fill header
                 headerBg.SetBounds(0, 0, p.Width, p.Height);
-                int right = p.Width - 16;
-                int textX = right - 220;
+                int right = p.Width - 10;
+                int textX = right - 180;
 
                 // Position user info and version with a 5px offset and clear spacing
-                lblWelcome.Location = new Point(textX, 5);
-                _lblClock.Location  = new Point(textX, 28);
-                lblVer.Location     = new Point(textX, 48);
-                avatar.Location     = new Point(right - 276, 10);
-                ctrlGroup.Location  = new Point(right - 520, 0);
+                lblWelcome.Location = new Point(textX, 0);
+                _lblClock.Location  = new Point(textX, 22);
+                lblVer.Location     = new Point(textX, 40);
+                avatar.Location     = new Point(right - 244, 4);
+                stopAvatarSep.Location = new Point(right - 273, 8);
+                flGroup.Location    = new Point(right - 572, 2);
+                stopGroup.Location  = new Point(right - 572 + flGroup.Width + 12, 2);
             };
             return p;
         }
@@ -235,14 +258,17 @@ namespace ADSRDashboard
         // ── Fallback GHT hex logo drawing ──────────────────────────────────────
         void DrawGhtLogo(object? sender, PaintEventArgs e)
         {
+            if (sender is not Control c) return;
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            using var path = new GraphicsPath(); path.AddPolygon(HexPts(new PointF(22, 22), 20));
-            using var lgb  = new LinearGradientBrush(new Point(0, 0), new Point(44, 44),
+            float w = c.Width, h = c.Height, cx = w / 2f, cy = h / 2f, r = Math.Min(cx, cy) - 2;
+            using var path = new GraphicsPath(); path.AddPolygon(HexPts(new PointF(cx, cy), r));
+            using var lgb  = new LinearGradientBrush(new Point(0, 0), new Point((int)w, (int)h),
                 Color.FromArgb(205, 50, 50), Color.FromArgb(235, 130, 30));
             g.FillPath(lgb, path);
-            using var wp = new Pen(Color.White, 2f);
-            g.DrawLine(wp, 19, 12, 19, 32);
-            for (int i = -1; i <= 1; i++) { int ny = 22 + i * 7; g.DrawLine(wp, 19, ny, 28, ny); g.FillEllipse(Brushes.White, 26, ny - 3, 6, 6); }
+            float s = w / 44f;
+            using var wp = new Pen(Color.White, 2f * s);
+            g.DrawLine(wp, 19 * s, 12 * s, 19 * s, 32 * s);
+            for (int i = -1; i <= 1; i++) { float ny = 22 * s + i * 7 * s; g.DrawLine(wp, 19 * s, ny, 28 * s, ny); g.FillEllipse(Brushes.White, 26 * s, ny - 3 * s, 6 * s, 6 * s); }
         }
 
         // ── Image-based control slot (fan / light / stop) ──────────────────────
@@ -250,10 +276,11 @@ namespace ADSRDashboard
         {
             var btn = new Button
             {
-                Location = new Point(x + 1, 1), Size = new Size(74, 58),
+                Location = new Point(x + 1, 1), Size = new Size(type == "stop" ? 53 : 100, 53),
                 BackColor = Color.FromArgb(228, 231, 238),
                 FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Tag = true
             };
+            Image? swImg = LoadImg("switch.png");
             btn.FlatAppearance.BorderSize = 0;
 
             Image? imgOn = null, imgOff = null; string lbl = "";
@@ -280,7 +307,8 @@ namespace ADSRDashboard
                 var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
                 using var bg = new SolidBrush(btn.BackColor); g.FillRectangle(bg, 0, 0, btn.Width, btn.Height);
 
-                Image? img;
+                int sz = (type == "stop") ? 35 : 48;
+                Image? img = null;
                 if (ct == "fan")
                 {
                     // Choose fan image based on front/back state
@@ -294,14 +322,27 @@ namespace ADSRDashboard
                     bool isOn = ct == "stop" ? _machineOn : (bool)btn.Tag;
                     img = isOn ? con : coff;
                 }
-
-                int sz = 44;
-                int ix = (btn.Width - sz) / 2;
-                // Center vertically if there is no text label (like the Stop button)
+                
                 int iy = (btn.Height - sz) / 2;
+                if (ct == "stop")
+                {
+                    int ix = (btn.Width - sz) / 2;
+                    if (img != null) g.DrawImage(img, ix, iy, sz, sz);
+                    else { using var fb = new SolidBrush(C_GREEN); g.FillEllipse(fb, ix + 4, iy + 4, sz - 8, sz - 8); }
+                }
+                else
+                {
+                    // Rectangular switch logic (vertical: tall height, short width)
+                    int swH = sz;
+                    int swW = 20;
+                    int swX = (ct == "fan") ? 8 : 12; // Spacing from left edge/divider
+                    int swY = (btn.Height - swH) / 2;
+                    if (swImg != null) g.DrawImage(swImg, swX, swY, swW, swH);
 
-                if (img != null) g.DrawImage(img, ix, iy, sz, sz);
-                else { using var fb = new SolidBrush(C_GREEN); g.FillEllipse(fb, ix + 4, iy + 2, sz - 8, sz - 8); }
+                    int ix = swX + swW + 10; // Spacing between switch and icon
+                    if (img != null) g.DrawImage(img, ix, iy, sz, sz);
+                    else { using var fb = new SolidBrush(C_GREEN); g.FillEllipse(fb, ix + 4, iy + 4, sz - 8, sz - 8); }
+                }
             };
 
             if (type == "stop")
@@ -322,10 +363,15 @@ namespace ADSRDashboard
                     }
                 };
             }
-            else if (type == "fan")
-                btn.Click += (s, e) => ShowFanPopup(btn);
             else
-                btn.Click += (s, e) => { btn.Tag = !(bool)btn.Tag; _lightOn = (bool)btn.Tag; btn.Invalidate(); };
+            {
+                btn.MouseDown += (s, e) =>
+                {
+                    if (e.X > 42) return; // Trigger interaction if clicking on the vertical switch area
+                    if (type == "fan") ShowFanPopup(btn);
+                    else { btn.Tag = !(bool)btn.Tag; _lightOn = (bool)btn.Tag; btn.Invalidate(); }
+                };
+            }
 
             return btn;
         }
@@ -782,7 +828,7 @@ namespace ADSRDashboard
             };
             _cmbView.Items.AddRange(new object[] { "Front Physical Bin View", "Back Physical Bin View", "Virtual Bin View" });
             _cmbView.SelectedIndex = 0;
-            _cmbView.SelectedIndexChanged += (s, e) => RefreshBinGrid();
+            _cmbView.SelectedIndexChanged += (s, e) => { RefreshBinGrid(); outer.PerformLayout(); };
 
             int dx = 0;
             var badge1 = MakeStatBadge("0", "In Pending",    C_BIN_EMPTY, ref dx);
@@ -828,7 +874,7 @@ namespace ADSRDashboard
             // BOT_P=50: increased spacing at bottom to prevent bin grid from bleeding into footer
             const int BOT_P       = 50;
 
-            outer.Resize += (s, e) =>
+            outer.Layout += (s, e) =>
             {
                 int pw = outer.Width, ph = outer.Height;
                 int lRail = Math.Max(18, (int)(pw * LEFT_PCT));
@@ -842,16 +888,20 @@ namespace ADSRDashboard
                 subHdr.SetBounds(20, 0, topPic.Width - 40, topPic.Height);
 
                 // Position badges to lean right
+                bool isVirt = _cmbView?.SelectedIndex == 2;
+                badge3[0].Visible = badge3[1].Visible = !isVirt;
+                var currentBadges = isVirt ? new[] { badge1, badge2 } : badgeGroups;
+
                 int totalBadgeW = 0;
-                foreach (var g in badgeGroups) 
-                    totalBadgeW += 40 + ((Label)g[1]).PreferredWidth + 20;
+                foreach (var g in currentBadges) 
+                    totalBadgeW += 40 + ((Label)g[1]).PreferredWidth + 100;
                 
                 int curX = subHdr.Width - totalBadgeW;
-                foreach (var g in badgeGroups)
+                foreach (var g in currentBadges)
                 {
                     g[0].Left = curX;
                     g[1].Left = curX + 40;
-                    curX += 40 + ((Label)g[1]).PreferredWidth + 20;
+                    curX += 40 + ((Label)g[1]).PreferredWidth + 100;
                 }
 
                 // Bin grid fills the dark inner area — constrained to adm_bottom's grey box
@@ -879,7 +929,7 @@ namespace ADSRDashboard
 
             // Use transparent background on the text label so adm_top shows through
             var lbl = new Label { Text = label, AutoSize = true, Location = new Point(x + 40, 21), Font = new Font("Segoe UI", 9.5f), ForeColor = C_TEXT_DARK, BackColor = Color.Transparent };
-            x += 40 + lbl.PreferredWidth + 20;
+            x += 40 + lbl.PreferredWidth + 100;
             return new Control[] { cir, lbl };
         }
 
@@ -977,6 +1027,11 @@ namespace ADSRDashboard
 
                 if (isG || isH || isT) bg = C_GREEN;
                 else bg = rng.Next(100) < 8 ? C_RED : C_BIN_EMPTY; // Reduced red noise for clarity
+            }
+            else if (label.StartsWith("VT"))
+            {
+                int pick = rng.Next(10);
+                bg = pick < 6 ? C_GREEN : C_BIN_EMPTY; // No red for virtual bins
             }
             else
             {
