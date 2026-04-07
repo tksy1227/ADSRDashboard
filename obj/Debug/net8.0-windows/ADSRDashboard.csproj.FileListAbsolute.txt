@@ -38,3 +38,4 @@ C:\Projects\ADSR FS\ADSRDashboard\obj\Debug\net8.0-windows\refint\ADSRDashboard.
 C:\Projects\ADSR FS\ADSRDashboard\obj\Debug\net8.0-windows\ADSRDashboard.pdb
 C:\Projects\ADSR FS\ADSRDashboard\obj\Debug\net8.0-windows\ADSRDashboard.genruntimeconfig.cache
 C:\Projects\ADSR FS\ADSRDashboard\obj\Debug\net8.0-windows\ref\ADSRDashboard.dll
+C:\Projects\ADSR FS\ADSRDashboard\bin\Debug\net8.0-windows\images\storage_bin.png

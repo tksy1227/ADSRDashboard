@@ -149,7 +149,7 @@ namespace ADSRDashboard
             if (topBorderImg != null) headerBg.Image = topBorderImg;
 
             // ── Logo: dashboard_m_l.png (falls back to drawn GHT hex) ──────────
-            var logo = new Panel { Size = new Size(60, 60), Location = new Point(14, 10), BackColor = Color.Transparent };
+            var logo = new Panel { Size = new Size(44, 44), Location = new Point(14, 10), BackColor = Color.Transparent };
             var dashLogoImg = LoadImg("dashboard_m_l.png");
             if (dashLogoImg != null)
             {
@@ -215,8 +215,9 @@ namespace ADSRDashboard
             var lblWelcome = new Label { Text = "Welcome", Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true };
             _lblClock      = new Label { Text = DateTime.Now.ToString("d MMM yyyy   HH:mm:ss"), Font = new Font("Segoe UI", 8.5f), ForeColor = Theme.TextMid, AutoSize = true };
             var lblVer     = new Label { Text = "ASRS (GUI v1.0.00)", Font = new Font("Segoe UI", 8f), ForeColor = Theme.TextMid, AutoSize = true };
+            var lblSubLogo = new Label { Text = "ADSR - Dashboard", Font = new Font("Segoe UI", 8f, FontStyle.Italic), ForeColor = Theme.TextMid, AutoSize = true, Location = new Point(14, 56), BackColor = Color.Transparent };
 
-            p.Controls.AddRange(new Control[] { logo, flGroup, stopGroup, stopAvatarSep, avatar, lblWelcome, _lblClock, lblVer });
+            p.Controls.AddRange(new Control[] { logo, lblSubLogo, flGroup, stopGroup, stopAvatarSep, avatar, lblWelcome, _lblClock, lblVer });
             // Add background image LAST so it sits at the bottom of the Z-stack
             p.Controls.Add(headerBg);
             p.Resize += (s, e) =>
@@ -747,7 +748,7 @@ namespace ADSRDashboard
                 // No fallback border line needed — page bg is fine
             };
 
-            var ghtPic = new PictureBox { Size = new Size(72, 38), Location = new Point(10, 5), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent };
+            var ghtPic = new PictureBox { Size = new Size(64, 34), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent };
             if (ghtImg != null) ghtPic.Image = ghtImg;
 
             // Version label: LEFT-aligned, just after logo
@@ -758,8 +759,9 @@ namespace ADSRDashboard
             frame.Resize += (s, e) =>
             {
                 int cy = (frame.Height - lblCopy.PreferredHeight) / 2 + 2;
-                lblVer.Location  = new Point(90, cy + 2);
+                lblVer.Location  = new Point(16, cy + 2);
                 lblCopy.Location = new Point(frame.Width - lblCopy.PreferredWidth - 16, cy);
+                ghtPic.Location  = new Point(lblCopy.Left - ghtPic.Width - 5, (frame.Height - ghtPic.Height) / 2 + 4);
             };
             return frame;
         }
@@ -948,9 +950,19 @@ namespace ADSRDashboard
             int gX = 3, gY = 3, sX = panel.Padding.Left, sY = panel.Padding.Top;
             string lPfx = "L" + side, rPfx = "R" + side;
 
+            Image? storageBinImg = LoadImg("storage_bin.png");
+
             for (int col = 0; col < cols; col++)
                 for (int row = 0; row < rows; row++)
                 {
+                    // Row 7 (index 6), Columns 4-8 (index 3-7), Column 10 (index 9)
+                    if (side == "F" && row == 6 && ((col >= 3 && col <= 7) || col == 9))
+                    {
+                        var pb = new PictureBox { Size = new Size(bW + 2, bH + 2), Image = storageBinImg, SizeMode = PictureBoxSizeMode.StretchImage, Location = new Point(sX + col * (bW + gX) - 1, sY + row * (bH + gY) - 1) };
+                        panel.Controls.Add(pb);
+                        continue;
+                    }
+
                     int num = col * rows + (rows - row);
                     var b = MakeBinBtn(lPfx + num.ToString("D3"), bW, bH);
                     b.Location = new Point(sX + col * (bW + gX), sY + row * (bH + gY));
@@ -961,6 +973,14 @@ namespace ADSRDashboard
             for (int col = 0; col < cols; col++)
                 for (int row = 0; row < rows; row++)
                 {
+                    // Row 7 (index 6), Column 11 (index 0), Columns 13-17 (index 2-6)
+                    if (side == "F" && row == 6 && (col == 0 || (col >= 2 && col <= 6)))
+                    {
+                        var pb = new PictureBox { Size = new Size(bW + 2, bH + 2), Image = storageBinImg, SizeMode = PictureBoxSizeMode.StretchImage, Location = new Point(rightX + col * (bW + gX) - 1, sY + row * (bH + gY) - 1) };
+                        panel.Controls.Add(pb);
+                        continue;
+                    }
+
                     int num = col * rows + (rows - row);
                     var b = MakeBinBtn(rPfx + num.ToString("D3"), bW, bH);
                     b.Location = new Point(rightX + col * (bW + gX), sY + row * (bH + gY));
