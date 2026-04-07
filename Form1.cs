@@ -8,23 +8,6 @@ namespace ADSRDashboard
 {
     public partial class MainDashboard : Form
     {
-        // ── Palette ────────────────────────────────────────────────────────────
-        static readonly Color C_PAGE_BG    = Color.FromArgb(236, 238, 242);
-        static readonly Color C_WHITE      = Color.White;
-        static readonly Color C_BORDER     = Color.FromArgb(205, 210, 220);
-        static readonly Color C_ACCENT     = Color.FromArgb(185, 40, 40);
-        static readonly Color C_TEXT_DARK  = Color.FromArgb(38, 42, 52);
-        static readonly Color C_TEXT_MID   = Color.FromArgb(110, 118, 135);
-        static readonly Color C_RED        = Color.FromArgb(205, 50, 50);
-        static readonly Color C_GREEN      = Color.FromArgb(62, 175, 80);
-        static readonly Color C_BIN_DARK   = Color.FromArgb(50, 54, 64);
-        static readonly Color C_BIN_EMPTY  = Color.FromArgb(230, 235, 240);
-        static readonly Color C_BTN_DETAIL = Color.FromArgb(220, 223, 230);
-        static readonly Color C_BTN_GUIDE  = Color.FromArgb(195, 48, 52);
-        static readonly Color C_ALARM_ICON = Color.FromArgb(205, 50, 50);
-        static readonly Color C_MENU_ACT   = Color.FromArgb(185, 40, 40);
-        static readonly Color C_MENU_HOVER = Color.FromArgb(245, 246, 248);
-
         // ── State ─────────────────────────────────────────────────────────────
         bool _fanFrontOn = true, _fanBackOn = true, _lightOn = true, _machineOn = true;
         Form? _fanPopupHost = null;
@@ -70,7 +53,7 @@ namespace ADSRDashboard
             this.Text          = "ADSR - Dashboard";
             this.Size          = new Size(1600, 900);
             this.MinimumSize   = new Size(1600, 900);
-            this.BackColor     = C_PAGE_BG;
+            this.BackColor     = Theme.PageBg;
             this.Font          = new Font("Segoe UI", 9f);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.WindowState   = FormWindowState.Normal;
@@ -134,7 +117,7 @@ namespace ADSRDashboard
         void Build()
         {
             var frame1 = BuildFrame1_Header();
-            var body   = new Panel { Dock = DockStyle.Fill, BackColor = C_PAGE_BG };
+            var body   = new Panel { Dock = DockStyle.Fill, BackColor = Theme.PageBg };
 
             this.Controls.Add(body);
             this.Controls.Add(frame1);
@@ -150,7 +133,7 @@ namespace ADSRDashboard
         Panel BuildFrame1_Header()
         {
             // Use page background colour — no white box, blends with the page
-            var p = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = C_PAGE_BG };
+            var p = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = Theme.PageBg };
             // No painted border line
 
             // ── top_border_l.png as lowest background layer ───────────────────
@@ -189,13 +172,13 @@ namespace ADSRDashboard
             flGroup.Paint += (s, e) =>
             {
                 var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-                using var path = RoundedRect(new Rectangle(0, 0, flGroup.Width - 1, flGroup.Height - 1), 8);
-                using var pen = new Pen(C_BORDER, 1);
+                using var path = DrawingUtils.RoundedRect(new Rectangle(0, 0, flGroup.Width - 1, flGroup.Height - 1), 8);
+                using var pen = new Pen(Theme.Border, 1);
                 g.DrawPath(pen, path);
                 // Vertical separator line between Fan and Light buttons
                 g.DrawLine(pen, 102, 4, 102, flGroup.Height - 4);
             };
-            using (var path = RoundedRect(new Rectangle(0, 0, 204, 55), 8)) flGroup.Region = new Region(path);
+            using (var path = DrawingUtils.RoundedRect(new Rectangle(0, 0, 204, 55), 8)) flGroup.Region = new Region(path);
 
             var btnFan   = MakeImgCtrlSlot("fan",   0,   flGroup);
             _btnFanCtrl  = btnFan;   // store ref so fan popup can update the icon
@@ -207,17 +190,17 @@ namespace ADSRDashboard
             stopGroup.Paint += (s, e) =>
             {
                 var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-                using var path = RoundedRect(new Rectangle(0, 0, stopGroup.Width - 1, stopGroup.Height - 1), 8);
-                using var pen = new Pen(C_BORDER, 1);
+                using var path = DrawingUtils.RoundedRect(new Rectangle(0, 0, stopGroup.Width - 1, stopGroup.Height - 1), 8);
+                using var pen = new Pen(Theme.Border, 1);
                 g.DrawPath(pen, path);
             };
-            using (var path = RoundedRect(new Rectangle(0, 0, 55, 55), 8)) stopGroup.Region = new Region(path);
+            using (var path = DrawingUtils.RoundedRect(new Rectangle(0, 0, 55, 55), 8)) stopGroup.Region = new Region(path);
 
             var btnStop = MakeImgCtrlSlot("stop", 0, stopGroup);
             stopGroup.Controls.Add(btnStop);
 
             // ── Divider between Stop and Avatar ──────────────────────────────
-            var stopAvatarSep = new Panel { Size = new Size(1, 44), BackColor = C_BORDER };
+            var stopAvatarSep = new Panel { Size = new Size(1, 44), BackColor = Theme.Border };
 
             // ── Avatar + user block ───────────────────────────────────────────
             var avatar = new Panel { Size = new Size(52, 52), BackColor = Color.Transparent };
@@ -229,9 +212,9 @@ namespace ADSRDashboard
                 using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
                 g.DrawString("GU", new Font("Segoe UI", 15f, FontStyle.Bold), Brushes.White, new RectangleF(0, 0, 52, 52), sf);
             };
-            var lblWelcome = new Label { Text = "Welcome",                                      Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = C_TEXT_DARK, AutoSize = true };
-            _lblClock      = new Label { Text = DateTime.Now.ToString("d MMM yyyy   HH:mm:ss"), Font = new Font("Segoe UI", 8.5f),                  ForeColor = C_TEXT_MID,  AutoSize = true };
-            var lblVer     = new Label { Text = "ASRS (GUI v1.0.00)",                           Font = new Font("Segoe UI", 8f),                    ForeColor = C_TEXT_MID,  AutoSize = true };
+            var lblWelcome = new Label { Text = "Welcome", Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true };
+            _lblClock      = new Label { Text = DateTime.Now.ToString("d MMM yyyy   HH:mm:ss"), Font = new Font("Segoe UI", 8.5f), ForeColor = Theme.TextMid, AutoSize = true };
+            var lblVer     = new Label { Text = "ASRS (GUI v1.0.00)", Font = new Font("Segoe UI", 8f), ForeColor = Theme.TextMid, AutoSize = true };
 
             p.Controls.AddRange(new Control[] { logo, flGroup, stopGroup, stopAvatarSep, avatar, lblWelcome, _lblClock, lblVer });
             // Add background image LAST so it sits at the bottom of the Z-stack
@@ -261,7 +244,7 @@ namespace ADSRDashboard
             if (sender is not Control c) return;
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             float w = c.Width, h = c.Height, cx = w / 2f, cy = h / 2f, r = Math.Min(cx, cy) - 2;
-            using var path = new GraphicsPath(); path.AddPolygon(HexPts(new PointF(cx, cy), r));
+            using var path = new GraphicsPath(); path.AddPolygon(DrawingUtils.HexPts(new PointF(cx, cy), r));
             using var lgb  = new LinearGradientBrush(new Point(0, 0), new Point((int)w, (int)h),
                 Color.FromArgb(205, 50, 50), Color.FromArgb(235, 130, 30));
             g.FillPath(lgb, path);
@@ -277,7 +260,7 @@ namespace ADSRDashboard
             var btn = new Button
             {
                 Location = new Point(x + 1, 1), Size = new Size(type == "stop" ? 53 : 100, 53),
-                BackColor = Color.FromArgb(228, 231, 238),
+                BackColor = Color.FromArgb(228, 231, 238), // Custom neutral bg
                 FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Tag = true
             };
             Image? swImg = LoadImg("switch.png");
@@ -328,7 +311,7 @@ namespace ADSRDashboard
                 {
                     int ix = (btn.Width - sz) / 2;
                     if (img != null) g.DrawImage(img, ix, iy, sz, sz);
-                    else { using var fb = new SolidBrush(C_GREEN); g.FillEllipse(fb, ix + 4, iy + 4, sz - 8, sz - 8); }
+                    else { using var fb = new SolidBrush(Theme.Green); g.FillEllipse(fb, ix + 4, iy + 4, sz - 8, sz - 8); }
                 }
                 else
                 {
@@ -341,7 +324,7 @@ namespace ADSRDashboard
 
                     int ix = swX + swW + 10; // Spacing between switch and icon
                     if (img != null) g.DrawImage(img, ix, iy, sz, sz);
-                    else { using var fb = new SolidBrush(C_GREEN); g.FillEllipse(fb, ix + 4, iy + 4, sz - 8, sz - 8); }
+                    else { using var fb = new SolidBrush(Theme.Green); g.FillEllipse(fb, ix + 4, iy + 4, sz - 8, sz - 8); }
                 }
             };
 
@@ -571,8 +554,8 @@ namespace ADSRDashboard
             var lblName = new Label { Text = fanName + " Fan", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Color.White, AutoSize = true, Location = new Point(14, y + 4) };
 
             // ON / OFF labels
-            var lblOn  = new Label { Text = "ON",  Font = new Font("Segoe UI", 8.5f), ForeColor = currentOn ? C_GREEN    : C_TEXT_MID, AutoSize = true, Location = new Point(14,  y + 30) };
-            var lblOff = new Label { Text = "OFF", Font = new Font("Segoe UI", 8.5f), ForeColor = currentOn ? C_TEXT_MID : C_RED,      AutoSize = true, Location = new Point(54,  y + 30) };
+            var lblOn  = new Label { Text = "ON",  Font = new Font("Segoe UI", 8.5f), ForeColor = currentOn ? Theme.Green    : Theme.TextMid, AutoSize = true, Location = new Point(14,  y + 30) };
+            var lblOff = new Label { Text = "OFF", Font = new Font("Segoe UI", 8.5f), ForeColor = currentOn ? Theme.TextMid : Theme.Red,      AutoSize = true, Location = new Point(54,  y + 30) };
 
             // Toggle button (drawn as pill switch)
             bool state = currentOn;
@@ -587,10 +570,10 @@ namespace ADSRDashboard
             {
                 state = !state; toggle.Tag = state;
                 toggle.Invalidate();
-                lblOn.ForeColor  = state ? C_GREEN    : C_TEXT_MID;
-                lblOff.ForeColor = state ? C_TEXT_MID : C_RED;
+                lblOn.ForeColor  = state ? Theme.Green    : Theme.TextMid;
+                lblOff.ForeColor = state ? Theme.TextMid : Theme.Red;
                 onChange(state);
-                // Update the main fan button icon in the header control group
+                // Update the main fan button icon in the header
                 _btnFanCtrl?.Invalidate();
             };
 
@@ -630,13 +613,13 @@ namespace ADSRDashboard
         // ═════════════════════════════════════════════════════════════════════
         void BuildBody(Panel body)
         {
-            body.Padding = new Padding(8, 4, 8, 0);   // reduced padding, no white margins
+            body.Padding = new Padding(8, 4, 8, 0);
 
             var footer = BuildFrame5_Footer();
             body.Controls.Add(footer);
 
             // Main content row (Fill)
-            var row = new Panel { Dock = DockStyle.Fill, BackColor = C_PAGE_BG };
+            var row = new Panel { Dock = DockStyle.Fill, BackColor = Theme.PageBg };
             body.Controls.Add(row);
 
             // Build all three panels
@@ -648,7 +631,7 @@ namespace ADSRDashboard
             _machineBar = machBar;
 
             // Left column panel  (machine bar stacked above bin area)
-            var leftCol = new Panel { BackColor = C_PAGE_BG };
+            var leftCol = new Panel { BackColor = Theme.PageBg };
 
             leftCol.Controls.Add(binPanel);
             leftCol.Controls.Add(machBar);
@@ -686,13 +669,13 @@ namespace ADSRDashboard
         Panel BuildFrame2_MachineBar()
         {
             // Outer strip — page background, no border box
-            var strip = new Panel { BackColor = C_PAGE_BG };
+            var strip = new Panel { BackColor = Theme.PageBg };
             // Inner frame — page background (no white rounded box)
-            var frame = new Panel { BackColor = C_PAGE_BG };
+            var frame = new Panel { BackColor = Theme.PageBg };
             // No Paint override — no white rounded rectangle drawn
 
             // Machine State (left side of frame)
-            var lblMSTitle = new Label { Text = "Machine State", Font = new Font("Segoe UI", 8f), ForeColor = C_TEXT_DARK, AutoSize = true, Location = new Point(14, 4) };
+            var lblMSTitle = new Label { Text = "Machine State", Font = new Font("Segoe UI", 8f), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(14, 4) };
 
             // Static gear image (no rotation per feedback)
             _gearPanel = new Panel { Size = new Size(120, 32), Location = new Point(14, 14), BackColor = Color.Transparent };
@@ -702,7 +685,7 @@ namespace ADSRDashboard
             {
                 var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
                 Image? img = _machineOn ? gearRun : gearStop;
-                if (img == null) { using var pen = new Pen(_machineOn ? C_GREEN : C_RED, 2.5f); g.DrawArc(pen, 4, 4, 22, 22, 0, 180); return; }
+                if (img == null) { using var pen = new Pen(_machineOn ? Theme.Green : Theme.Red, 2.5f); g.DrawArc(pen, 4, 4, 22, 22, 0, 180); return; }
                 // Draw static (no rotation)
                 float sx = (float)_gearPanel!.Width / img.Width;
                 float sy = (float)_gearPanel.Height / img.Height;
@@ -714,7 +697,7 @@ namespace ADSRDashboard
             };
 
             // System Health (right side)
-            var lblSHTitle = new Label { Text = "System Health", Font = new Font("Segoe UI", 8f), ForeColor = C_TEXT_DARK, AutoSize = true };
+            var lblSHTitle = new Label { Text = "System Health", Font = new Font("Segoe UI", 8f), ForeColor = Theme.TextDark, AutoSize = true };
             var chipMAP    = MakeHealthChip("map_down_l.png",  "map_up_l.png",  false);
             var chipIWEA   = MakeHealthChip("iwea_down_l.png", "iwea_up_l.png", true);
             var chipPLC    = MakeHealthChip("plc_down_l.png",  "plc_up_l.png",  true);
@@ -754,11 +737,10 @@ namespace ADSRDashboard
         // ═════════════════════════════════════════════════════════════════════
         Panel BuildFrame5_Footer()
         {
-            var wrapper = new Panel { Dock = DockStyle.Bottom, Height = 48, BackColor = C_PAGE_BG };
             Image? borderImg = LoadImg("bottom_border_l.png");
             Image? ghtImg    = LoadImg("ght_logo.png");
 
-            var frame = new Panel { BackColor = C_PAGE_BG };
+            var frame = new Panel { Dock = DockStyle.Bottom, Height = 48, BackColor = Theme.PageBg };
             frame.Paint += (s, e) =>
             {
                 if (borderImg != null) e.Graphics.DrawImage(borderImg, 0, 0, frame.Width, frame.Height);
@@ -770,19 +752,16 @@ namespace ADSRDashboard
 
             // Version label: LEFT-aligned, just after logo
             var lblVer  = new Label { Text = "ASRS GUI v1.0.00", Font = new Font("Segoe UI", 8f), ForeColor = Color.FromArgb(160, 165, 175), AutoSize = true };
-            // Copyright: RIGHT-aligned
-            var lblCopy = new Label { Text = "Copyright © 2026 Great Health Technologies Pte Ltd.  All Rights Reserved.", Font = new Font("Segoe UI", 8.5f), ForeColor = C_TEXT_MID, AutoSize = true };
+            var lblCopy = new Label { Text = "Copyright © 2026 Great Health Technologies Pte Ltd.  All Rights Reserved.", Font = new Font("Segoe UI", 8.5f), ForeColor = Theme.TextMid, AutoSize = true };
 
             frame.Controls.AddRange(new Control[] { ghtPic, lblVer, lblCopy });
             frame.Resize += (s, e) =>
             {
                 int cy = (frame.Height - lblCopy.PreferredHeight) / 2 + 2;
-                lblVer.Location  = new Point(90, cy + 2);                                              // LEFT — next to logo
-                lblCopy.Location = new Point(frame.Width - lblCopy.PreferredWidth - 16, cy);           // RIGHT
+                lblVer.Location  = new Point(90, cy + 2);
+                lblCopy.Location = new Point(frame.Width - lblCopy.PreferredWidth - 16, cy);
             };
-            wrapper.Controls.Add(frame);
-            wrapper.Resize += (s, e) => frame.SetBounds(0, 4, wrapper.Width, wrapper.Height - 4);
-            return wrapper;
+            return frame;
         }
 
         // ═════════════════════════════════════════════════════════════════════
@@ -794,7 +773,7 @@ namespace ADSRDashboard
         // ═════════════════════════════════════════════════════════════════════
         Panel BuildFrame3_BinArea()
         {
-            var outer = new Panel { BackColor = C_PAGE_BG };
+            var outer = new Panel { BackColor = Theme.PageBg };
 
             // ── Background image layers (drawn behind everything else) ──────────
             // adm_bottom.png: cabinet outer frame + side rails + dark inner area
@@ -831,11 +810,11 @@ namespace ADSRDashboard
             _cmbView.SelectedIndexChanged += (s, e) => { RefreshBinGrid(); outer.PerformLayout(); };
 
             int dx = 0;
-            var badge1 = MakeStatBadge("0", "In Pending",    C_BIN_EMPTY, ref dx);
+            var badge1 = MakeStatBadge("0", "In Pending",    Theme.BinEmpty, ref dx);
             _lblCountPending = (Label)badge1[0];
-            var badge2 = MakeStatBadge("0", "In Operation",  C_GREEN,                       ref dx);
+            var badge2 = MakeStatBadge("0", "In Operation",  Theme.Green,                       ref dx);
             _lblCountInOp = (Label)badge2[0];
-            var badge3 = MakeStatBadge("0", "Disabled",      C_RED,                         ref dx);
+            var badge3 = MakeStatBadge("0", "Disabled",      Theme.Red,                         ref dx);
             _lblCountDisabled = (Label)badge3[0];
 
             var badgeGroups = new[] { badge1, badge2, badge3 };
@@ -844,7 +823,7 @@ namespace ADSRDashboard
                 foreach (var c in group) subHdr.Controls.Add(c);
 
             // ── Dark bin grid panel ────────────────────────────────────────────
-            _pnlBinGrid = new Panel { BackColor = C_BIN_DARK, AutoScroll = false, Padding = new Padding(12, 6, 12, 6) };
+            _pnlBinGrid = new Panel { BackColor = Theme.BinDark, AutoScroll = false, Padding = new Padding(12, 6, 12, 6) };
             _pnlBinGrid.Paint += (s, e) =>
             {
                 using var pen = new Pen(Color.FromArgb(75, 79, 92), 1.5f);
@@ -858,6 +837,10 @@ namespace ADSRDashboard
             outer.Controls.Add(_pnlBinGrid);  // behind subHdr
             outer.Controls.Add(topPic);       // behind bin grid
             outer.Controls.Add(bgPic);        // bottom of stack (back)
+
+            // Fix Z-order: ensure background images are at the back as intended
+            outer.Controls.SetChildIndex(bgPic, outer.Controls.Count - 1);
+            outer.Controls.SetChildIndex(topPic, outer.Controls.Count - 2);
 
             // Ensure the background PictureBoxes do NOT capture mouse events
             bgPic.Enabled  = false;
@@ -923,14 +906,14 @@ namespace ADSRDashboard
                 using var br = new SolidBrush(col);
                 g.FillEllipse(br, 0, 0, 31, 31);
                 using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                var txtBrush = (col == C_BIN_EMPTY) ? Brushes.Black : Brushes.White;
+                var txtBrush = (col == Theme.BinEmpty) ? Brushes.Black : Brushes.White;
                 g.DrawString(cir.Text, cir.Font, txtBrush, new RectangleF(0, 0, 32, 32), sf);
             };
 
             // Use transparent background on the text label so adm_top shows through
-            var lbl = new Label { Text = label, AutoSize = true, Location = new Point(x + 40, 21), Font = new Font("Segoe UI", 9.5f), ForeColor = C_TEXT_DARK, BackColor = Color.Transparent };
-            x += 40 + lbl.PreferredWidth + 100;
-            return new Control[] { cir, lbl };
+            var badgeLabel = new Label { Text = label, AutoSize = true, Location = new Point(x + 40, 21), Font = new Font("Segoe UI", 9.5f), ForeColor = Theme.TextDark, BackColor = Color.Transparent };
+            x += 40 + badgeLabel.PreferredWidth + 100;
+            return new Control[] { cir, badgeLabel };
         }
 
         // ── Bin grid rendering ─────────────────────────────────────────────────
@@ -1012,46 +995,46 @@ namespace ADSRDashboard
         Button MakeBinBtn(string label, int w, int h)
         {
             var rng  = new Random(label.GetHashCode() & 0x7fffffff);
-            Color bg = C_BIN_EMPTY;
+            Color bg = Theme.BinEmpty;
 
             // "Easter Egg": Arrange green bins to spell "G H T" across physical bin grids
             if (label.Length >= 5 && (label.StartsWith("L") || label.StartsWith("R")))
             {
                 int num = int.Parse(label.Substring(2));
-                int c = (num - 1) / 9, r = 9 - ((num - 1) % 9 + 1);
+                int c = (num - 1) / 9, rowIdx = 9 - ((num - 1) % 9 + 1);
                 int gc = label.StartsWith("R") ? c + 10 : c;
 
-                bool isG = (gc == 1 && r >= 1 && r <= 7) || (r == 1 && gc >= 1 && gc <= 5) || (r == 7 && gc >= 1 && gc <= 5) || (gc == 5 && r >= 5 && r <= 7) || (r == 5 && gc >= 3 && gc <= 5);
-                bool isH = (gc == 8 && r >= 1 && r <= 7) || (gc == 11 && r >= 1 && r <= 7) || (r == 4 && gc >= 8 && gc <= 11);
-                bool isT = (r == 1 && gc >= 14 && gc <= 18) || (gc == 16 && r >= 1 && r <= 7);
+                bool isG = (gc == 1 && rowIdx >= 1 && rowIdx <= 7) || (rowIdx == 1 && gc >= 1 && gc <= 5) || (rowIdx == 7 && gc >= 1 && gc <= 5) || (gc == 5 && rowIdx >= 5 && rowIdx <= 7) || (rowIdx == 5 && gc >= 3 && gc <= 5);
+                bool isH = (gc == 8 && rowIdx >= 1 && rowIdx <= 7) || (gc == 11 && rowIdx >= 1 && rowIdx <= 7) || (rowIdx == 4 && gc >= 8 && gc <= 11);
+                bool isT = (rowIdx == 1 && gc >= 14 && gc <= 18) || (gc == 16 && rowIdx >= 1 && rowIdx <= 7);
 
-                if (isG || isH || isT) bg = C_GREEN;
-                else bg = rng.Next(100) < 8 ? C_RED : C_BIN_EMPTY; // Reduced red noise for clarity
+                if (isG || isH || isT) bg = Theme.Green;
+                else bg = rng.Next(100) < 8 ? Theme.Red : Theme.BinEmpty;
             }
             else if (label.StartsWith("VT"))
             {
                 int pick = rng.Next(10);
-                bg = pick < 6 ? C_GREEN : C_BIN_EMPTY; // No red for virtual bins
+                bg = pick < 6 ? Theme.Green : Theme.BinEmpty;
             }
             else
             {
                 int pick = rng.Next(10);
-                bg = pick < 2 ? C_RED : pick < 6 ? C_GREEN : C_BIN_EMPTY;
+                bg = pick < 2 ? Theme.Red : pick < 6 ? Theme.Green : Theme.BinEmpty;
             }
 
-            bool dk  = bg != C_BIN_EMPTY;
-            var btn  = new Button
+            bool dk  = bg != Theme.BinEmpty;
+            var btn = new Button
             {
                 Text = label, Font = new Font("Segoe UI", w > 50 ? 7.5f : 6.5f),
-                ForeColor = dk ? Color.White : C_TEXT_DARK, BackColor = bg,
+                ForeColor = dk ? Color.White : Theme.TextDark, BackColor = bg,
                 FlatStyle = FlatStyle.Flat, Size = new Size(w, h), Cursor = Cursors.Hand,
                 Tag = (label, bg),   // store both label AND original colour
                 TextAlign = ContentAlignment.MiddleCenter
             };
             btn.FlatAppearance.BorderSize  = 1;
 
-            if (bg == C_RED) _cntDisabled++;
-            else if (bg == C_GREEN) _cntInOp++;
+            if (bg == Theme.Red) _cntDisabled++;
+            else if (bg == Theme.Green) _cntInOp++;
             else _cntPending++; // Counts light grey (C_BIN_EMPTY) bins
 
             btn.FlatAppearance.BorderColor = Color.FromArgb(65, 69, 82);
@@ -1064,7 +1047,7 @@ namespace ADSRDashboard
         // ── Bin hover / click ──────────────────────────────────────────────────
         void BinMouseEnter(Button btn) 
         { 
-            if (btn.BackColor == C_RED) 
+            if (btn.BackColor == Theme.Red) 
             { 
                 if (!_isHoverLock) DismissHoverPopup();
                 return; 
@@ -1089,7 +1072,7 @@ namespace ADSRDashboard
 
         void BinClick(Button btn)
         {
-            if (btn.BackColor == C_RED) return; // Red bins are non-interactive
+            if (btn.BackColor == Theme.Red) return;
 
             if (_isHoverLock && _clickedBin == btn)
             {
@@ -1120,7 +1103,7 @@ namespace ADSRDashboard
                 // Read original colour from tag tuple
                 var (_, origColor) = ((string, Color))btn.Tag!;
                 _clickedBinOriginalColor = origColor;                
-                btn.BackColor = DarkenColor(btn.BackColor, 15); // Darken the new clicked bin by 15%
+                btn.BackColor = DrawingUtils.DarkenColor(btn.BackColor, 15);
                 btn.Invalidate(); // Force redraw
 
                 ShowBinDetail(btn);
@@ -1131,12 +1114,12 @@ namespace ADSRDashboard
         {
             // Always close any existing popup first
             if (_hoverPopup != null) DismissHoverPopup();
-            var (binId, origColor) = btn.Tag is (string s, Color c) ? (s, c) : (btn.Tag?.ToString() ?? "", C_BIN_EMPTY);
+            var (binId, origColor) = btn.Tag is (string s, Color c) ? (s, c) : (btn.Tag?.ToString() ?? "", Theme.BinEmpty);
             
             string infoText = "";
             int popW = 330, popH = 350;
 
-            if (origColor == C_GREEN)
+            if (origColor == Theme.Green)
             {
                 infoText = "[ 60 ] PARACETAMOL 500MG TABLET 10s\r\n\r\n" +
                            "Article ID / Item ID\r\n0004-28-038-G001000A-S\r\n0004-28-038-G\r\n\r\n" +
@@ -1179,7 +1162,7 @@ namespace ADSRDashboard
             {
                 var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
                 if (_isHoverLock && _clickedBin == btn)
-                    g.FillRectangle(new SolidBrush(C_ACCENT), 0, 0, 5, popH);
+                    g.FillRectangle(new SolidBrush(Theme.Accent), 0, 0, 5, popH);
                 g.DrawRectangle(new Pen(Color.FromArgb(85, 90, 110), 1.5f), 0, 0, popW - 1, popH - 1);
             };
 
@@ -1252,41 +1235,41 @@ namespace ADSRDashboard
         // ═════════════════════════════════════════════════════════════════════
         Panel BuildFrame4_AlertCenter()
         {
-            var outer = new Panel { BackColor = C_PAGE_BG };
+            var outer = new Panel { BackColor = Theme.PageBg };
             outer.Paint += (s, e) =>
             {
                 var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-                using var path = RoundedRect(new Rectangle(0, 0, outer.Width - 1, outer.Height - 1), 8);
-                using var br   = new SolidBrush(C_WHITE); g.FillPath(br, path);
-                using var pen  = new Pen(C_BORDER, 1f);   g.DrawPath(pen, path);
-                using var rp2  = new Pen(C_ACCENT, 3f);   g.DrawLine(rp2, 2, 1, outer.Width - 3, 1);
+                using var path = DrawingUtils.RoundedRect(new Rectangle(0, 0, outer.Width - 1, outer.Height - 1), 8);
+                using var br   = new SolidBrush(Theme.White); g.FillPath(br, path);
+                using var pen  = new Pen(Theme.Border, 1f);   g.DrawPath(pen, path);
+                using var rp2  = new Pen(Theme.Accent, 3f);   g.DrawLine(rp2, 2, 1, outer.Width - 3, 1);
             };
 
-            var lblTitle = new Label { Text = "Alert Center", Font = new Font("Segoe UI", 13f, FontStyle.Bold), ForeColor = C_TEXT_DARK, AutoSize = true, Location = new Point(18, 16) };
+            var lblTitle = new Label { Text = "Alert Center", Font = new Font("Segoe UI", 13f, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(18, 16) };
 
-            var pnlTabs = new Panel { Location = new Point(0, 50), Height = 36, BackColor = C_WHITE };
+            var pnlTabs = new Panel { Location = new Point(0, 50), Height = 36, BackColor = Theme.White };
             pnlTabs.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
-            _alertScroll = new Panel { BackColor = C_WHITE, AutoScroll = true };
+            _alertScroll = new Panel { BackColor = Theme.White, AutoScroll = true };
             _alertScroll.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            _warnScroll  = new Panel { BackColor = C_WHITE, AutoScroll = true, Visible = false };
+            _warnScroll  = new Panel { BackColor = Theme.White, AutoScroll = true, Visible = false };
             _warnScroll.Anchor  = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
 
             PopulateAlarms(_alertScroll);
             PopulateWarnings(_warnScroll);
 
             bool alarmActive = true;
-            var btnAlarm = new Button { Text = "Alarm",   Font = new Font("Segoe UI", 10f, FontStyle.Bold), ForeColor = C_RED,      BackColor = C_WHITE, FlatStyle = FlatStyle.Flat, Size = new Size(108, 36), Location = new Point(0, 0),   Cursor = Cursors.Hand };
-            var btnWarn  = new Button { Text = "Warning", Font = new Font("Segoe UI", 10f),                 ForeColor = C_TEXT_MID, BackColor = C_WHITE, FlatStyle = FlatStyle.Flat, Size = new Size(108, 36), Location = new Point(108, 0), Cursor = Cursors.Hand };
+            var btnAlarm = new Button { Text = "Alarm",   Font = new Font("Segoe UI", 10f, FontStyle.Bold), ForeColor = Theme.Red,      BackColor = Theme.White, FlatStyle = FlatStyle.Flat, Size = new Size(108, 36), Location = new Point(0, 0),   Cursor = Cursors.Hand };
+            var btnWarn  = new Button { Text = "Warning", Font = new Font("Segoe UI", 10f),                 ForeColor = Theme.TextMid, BackColor = Theme.White, FlatStyle = FlatStyle.Flat, Size = new Size(108, 36), Location = new Point(108, 0), Cursor = Cursors.Hand };
             btnAlarm.FlatAppearance.BorderSize = 0; btnWarn.FlatAppearance.BorderSize = 0;
 
-            btnAlarm.Paint += (s, e) => { if (alarmActive) { using var pen = new Pen(C_RED, 2f); e.Graphics.DrawLine(pen, 6, btnAlarm.Height - 2, btnAlarm.Width - 6, btnAlarm.Height - 2); } };
+            btnAlarm.Paint += (s, e) => { if (alarmActive) { using var pen = new Pen(Theme.Red, 2f); e.Graphics.DrawLine(pen, 6, btnAlarm.Height - 2, btnAlarm.Width - 6, btnAlarm.Height - 2); } };
             btnWarn.Paint  += (s, e) => { if (!alarmActive) { using var pen = new Pen(Color.FromArgb(200, 155, 20), 2f); e.Graphics.DrawLine(pen, 6, btnWarn.Height - 2, btnWarn.Width - 6, btnWarn.Height - 2); } };
 
-            btnAlarm.Click += (s, e) => { alarmActive = true;  _alertScroll!.Visible = true; _warnScroll!.Visible = false; btnAlarm.Font = new Font("Segoe UI", 10f, FontStyle.Bold); btnAlarm.ForeColor = C_RED; btnWarn.Font = new Font("Segoe UI", 10f); btnWarn.ForeColor = C_TEXT_MID; btnAlarm.Invalidate(); btnWarn.Invalidate(); };
-            btnWarn.Click  += (s, e) => { alarmActive = false; _alertScroll!.Visible = false; _warnScroll!.Visible = true; btnAlarm.Font = new Font("Segoe UI", 10f); btnAlarm.ForeColor = C_TEXT_MID; btnWarn.Font = new Font("Segoe UI", 10f, FontStyle.Bold); btnWarn.ForeColor = Color.FromArgb(200, 155, 20); btnAlarm.Invalidate(); btnWarn.Invalidate(); };
+            btnAlarm.Click += (s, e) => { alarmActive = true;  _alertScroll!.Visible = true; _warnScroll!.Visible = false; btnAlarm.Font = new Font("Segoe UI", 10f, FontStyle.Bold); btnAlarm.ForeColor = Theme.Red; btnWarn.Font = new Font("Segoe UI", 10f); btnWarn.ForeColor = Theme.TextMid; btnAlarm.Invalidate(); btnWarn.Invalidate(); };
+            btnWarn.Click  += (s, e) => { alarmActive = false; _alertScroll!.Visible = false; _warnScroll!.Visible = true; btnAlarm.Font = new Font("Segoe UI", 10f); btnAlarm.ForeColor = Theme.TextMid; btnWarn.Font = new Font("Segoe UI", 10f, FontStyle.Bold); btnWarn.ForeColor = Color.FromArgb(200, 155, 20); btnAlarm.Invalidate(); btnWarn.Invalidate(); };
 
-            var tabSep = new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = C_BORDER };
+            var tabSep = new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = Theme.Border };
             pnlTabs.Controls.AddRange(new Control[] { btnAlarm, btnWarn, tabSep });
 
             outer.Controls.AddRange(new Control[] { lblTitle, pnlTabs, _alertScroll, _warnScroll });
@@ -1330,36 +1313,53 @@ namespace ADSRDashboard
             icon.Paint += (s, e) =>
             {
                 var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-                using var br = new SolidBrush(C_ALARM_ICON); g.FillEllipse(br, 0, 0, 27, 27);
+                using var br = new SolidBrush(Theme.AlarmIcon); g.FillEllipse(br, 0, 0, 27, 27);
                 using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
                 g.DrawString("!", new Font("Segoe UI", 13f, FontStyle.Bold), Brushes.White, new RectangleF(0, 0, 28, 28), sf);
             };
             int tx = lx + 36;
             c.Controls.Add(icon);
-            c.Controls.Add(new Label { Text = title, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = C_TEXT_DARK, AutoSize = true, Location = new Point(tx, y + 2) });
+            c.Controls.Add(new Label { Text = title, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(tx, y + 2) });
             int ny = y + 24;
-            if (!string.IsNullOrEmpty(detail)) { c.Controls.Add(new Label { Text = detail, Font = new Font("Segoe UI", 8.5f), ForeColor = C_TEXT_MID, AutoSize = true, Location = new Point(tx, ny) }); ny += 20; }
-            if (logRows != null)
-            {
-                for (int i = 0; i < logRows.GetLength(0); i++)
-                {
-                    var row = new Panel { Size = new Size(350, 18), Location = new Point(tx, ny), BackColor = C_WHITE };
-                    row.Controls.Add(new Label { Text = logRows[i, 0], Font = new Font("Segoe UI", 8f), ForeColor = C_TEXT_MID, Size = new Size(160, 18), Location = new Point(0, 0) });
-                    row.Controls.Add(new Label { Text = logRows[i, 1], Font = new Font("Segoe UI", 8f), ForeColor = C_TEXT_MID, Size = new Size(30, 18),  Location = new Point(162, 0) });
-                    row.Controls.Add(new Label { Text = logRows[i, 2], Font = new Font("Segoe UI", 8f), ForeColor = C_TEXT_MID, Size = new Size(70, 18),  Location = new Point(196, 0) });
-                    c.Controls.Add(row); ny += 20;
-                }
-                ny += 4;
-            }
+            if (!string.IsNullOrEmpty(detail)) { c.Controls.Add(new Label { Text = detail, Font = new Font("Segoe UI", 8.5f), ForeColor = Theme.TextMid, AutoSize = true, Location = new Point(tx, ny) }); ny += 20; }
             bool red = (guideTxt == "Guide to Fix"); string ct = title;
-            var bD = MakeBtn(detailTxt, C_BTN_DETAIL, C_TEXT_DARK, tx, ny + 2, 148, 28);
-            var bG = MakeBtn(guideTxt,  red ? C_BTN_GUIDE : C_BTN_DETAIL, red ? Color.White : C_TEXT_DARK, tx + 154, ny + 2, 178, 28);
+            var bD = MakeBtn(detailTxt, Theme.BtnDetail, Theme.TextDark, tx, ny + 2, 148, 28);
+            var bG = MakeBtn(guideTxt,  red ? Theme.BtnGuide : Theme.BtnDetail, red ? Color.White : Theme.TextDark, tx + 154, ny + 2, 178, 28);
             bD.Click += (s, e) => MessageBox.Show("Details: " + ct);
             if (red) bG.Click += (s, e) => ShowGuideToFixWindow(ct);
             else     bG.Click += (s, e) => MessageBox.Show("Contact engineer for:\n" + ct, "Contact Service Engineer", MessageBoxButtons.OK, MessageBoxIcon.Information);
             c.Controls.AddRange(new Control[] { bD, bG });
-            ny += 36;
-            c.Controls.Add(new Panel { Size = new Size(c.Width - lx * 2, 1), Location = new Point(lx, ny + 4), BackColor = C_BORDER });
+            ny += 38;
+
+            if (logRows != null)
+            {
+                int rowH = 22, tableW = 340;
+                int tableH = (logRows.GetLength(0) + 1) * rowH;
+                var pnlTable = new Panel { Size = new Size(tableW, tableH), Location = new Point(tx, ny), BackColor = Color.White };
+                pnlTable.Paint += (s, e) => {
+                    var g = e.Graphics; using var pen = new Pen(Theme.Border);
+                    g.DrawRectangle(pen, 0, 0, tableW - 1, tableH - 1);
+                    using var hBr = new SolidBrush(Color.FromArgb(245, 246, 248));
+                    g.FillRectangle(hBr, 1, 1, tableW - 2, rowH - 1);
+                    g.DrawLine(pen, 160, 0, 160, tableH);
+                    g.DrawLine(pen, 205, 0, 205, tableH);
+                    for (int i = 1; i <= logRows.GetLength(0); i++) g.DrawLine(pen, 0, i * rowH, tableW, i * rowH);
+                };
+                pnlTable.Controls.Add(new Label { Text = "Timestamp", Font = new Font("Segoe UI", 8f, FontStyle.Bold), Location = new Point(6, 4), AutoSize = true, BackColor = Color.Transparent });
+                pnlTable.Controls.Add(new Label { Text = "Qty",       Font = new Font("Segoe UI", 8f, FontStyle.Bold), Location = new Point(166, 4), AutoSize = true, BackColor = Color.Transparent });
+                pnlTable.Controls.Add(new Label { Text = "Source",    Font = new Font("Segoe UI", 8f, FontStyle.Bold), Location = new Point(211, 4), AutoSize = true, BackColor = Color.Transparent });
+
+                for (int i = 0; i < logRows.GetLength(0); i++) {
+                    int ry = (i + 1) * rowH + 3;
+                    pnlTable.Controls.Add(new Label { Text = logRows[i, 0], Font = new Font("Segoe UI", 8f), Location = new Point(6, ry), AutoSize = true });
+                    pnlTable.Controls.Add(new Label { Text = logRows[i, 1], Font = new Font("Segoe UI", 8f), Location = new Point(166, ry), AutoSize = true });
+                    pnlTable.Controls.Add(new Label { Text = logRows[i, 2], Font = new Font("Segoe UI", 8f), Location = new Point(211, ry), AutoSize = true });
+                }
+                c.Controls.Add(pnlTable);
+                ny += tableH + 8;
+            }
+
+            c.Controls.Add(new Panel { Size = new Size(c.Width - lx * 2, 1), Location = new Point(lx, ny + 4), BackColor = Theme.Border });
             return ny + 14;
         }
 
@@ -1376,338 +1376,27 @@ namespace ADSRDashboard
             };
             int tx = lx + 36; string ct = title;
             c.Controls.AddRange(new Control[] { icon,
-                new Label { Text = title,  Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = C_TEXT_DARK, AutoSize = true, Location = new Point(tx, y + 2) },
-                new Label { Text = detail, Font = new Font("Segoe UI", 8.5f),                  ForeColor = C_TEXT_MID,  AutoSize = true, Location = new Point(tx, y + 24) },
+                new Label { Text = title,  Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(tx, y + 2) },
+                new Label { Text = detail, Font = new Font("Segoe UI", 8.5f),                  ForeColor = Theme.TextMid,  AutoSize = true, Location = new Point(tx, y + 24) },
                 new Label { Text = ts,     Font = new Font("Segoe UI", 7.5f),                  ForeColor = Color.FromArgb(160, 165, 175), AutoSize = true, Location = new Point(tx, y + 44) }
             });
             int ny = y + 64;
-            var bDis = MakeBtn("Dismiss",         C_BTN_DETAIL, C_TEXT_DARK, tx,       ny, 100, 26);
-            var bDet = MakeBtn("Show Details >>", C_BTN_DETAIL, C_TEXT_DARK, tx + 106, ny, 140, 26);
+            var bDis = MakeBtn("Dismiss",         Theme.BtnDetail, Theme.TextDark, tx,       ny, 100, 26);
+            var bDet = MakeBtn("Show Details >>", Theme.BtnDetail, Theme.TextDark, tx + 106, ny, 140, 26);
             bDis.Click += (s, e) => MessageBox.Show("Warning dismissed:\n" + ct);
             bDet.Click += (s, e) => MessageBox.Show("Details:\n" + ct);
             c.Controls.AddRange(new Control[] { bDis, bDet });
             ny += 34;
-            c.Controls.Add(new Panel { Size = new Size(c.Width - lx * 2, 1), Location = new Point(lx, ny + 2), BackColor = C_BORDER });
+            c.Controls.Add(new Panel { Size = new Size(c.Width - lx * 2, 1), Location = new Point(lx, ny + 2), BackColor = Theme.Border });
             return ny + 12;
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        //  Guide to Fix popup window
-        // ═════════════════════════════════════════════════════════════════════
-        void ShowGuideToFixWindow(string alarmTitle)
-        {
-            using var popup = new RobotSafetyDoorPopup();
-            popup.ShowDialog(this);
-        }
-
-        // ═════════════════════════════════════════════════════════════════════
-        //  HELPERS
-        // ═════════════════════════════════════════════════════════════════════
+        void ShowGuideToFixWindow(string alarmTitle) { using var popup = new RobotSafetyDoorPopup(); popup.ShowDialog(this); }
         Button MakeBtn(string text, Color bg, Color fg, int x, int y, int w, int h)
         {
             var b = new Button { Text = text, Font = new Font("Segoe UI", 8.5f), BackColor = bg, ForeColor = fg, FlatStyle = FlatStyle.Flat, Size = new Size(w, h), Location = new Point(x, y), Cursor = Cursors.Hand };
-            b.FlatAppearance.BorderColor = C_BORDER; b.FlatAppearance.BorderSize = 1;
+            b.FlatAppearance.BorderColor = Theme.Border; b.FlatAppearance.BorderSize = 1;
             return b;
-        }
-
-        static PointF[] HexPts(PointF c, float r)
-        {
-            var pts = new PointF[6];
-            for (int i = 0; i < 6; i++) { double a = Math.PI / 180.0 * (60 * i - 30); pts[i] = new PointF(c.X + r * (float)Math.Cos(a), c.Y + r * (float)Math.Sin(a)); }
-            return pts;
-        }
-
-        /// <summary>
-        /// Returns a darker version of the specified color.
-        /// </summary>
-        /// <param name="color">The original color.</param>
-        /// <param name="percent">The percentage to darken (e.g., 15 for 15%).</param>
-        /// <returns>A new Color instance that is darker than the original.</returns>
-        Color DarkenColor(Color color, int percent)
-        {
-            percent = Math.Max(0, Math.Min(100, percent)); // Clamp percent between 0 and 100
-            float factor = 1f - (float)percent / 100f;
-            return Color.FromArgb(color.A, (int)(color.R * factor), (int)(color.G * factor), (int)(color.B * factor));
-        }
-
-
-        static GraphicsPath RoundedRect(Rectangle r, int rad)
-        {
-            var path = new GraphicsPath();
-            path.AddArc(r.X, r.Y, rad * 2, rad * 2, 180, 90);
-            path.AddArc(r.Right - rad * 2, r.Y, rad * 2, rad * 2, 270, 90);
-            path.AddArc(r.Right - rad * 2, r.Bottom - rad * 2, rad * 2, rad * 2, 0, 90);
-            path.AddArc(r.X, r.Bottom - rad * 2, rad * 2, rad * 2, 90, 90);
-            path.CloseFigure(); return path;
-        }
-    }
-
-    /// <summary>
-    /// Popup dialog for alarm "Problem: 111 – SHUT AND RESET ROBOT SAFETY DOOR".
-    /// </summary>
-    public class RobotSafetyDoorPopup : Form
-    {
-        static readonly Color C_HEADER_BG  = Color.FromArgb(55, 58, 68);
-        static readonly Color C_BODY_BG    = Color.FromArgb(245, 246, 248);
-        static readonly Color C_BTN_BG     = Color.FromArgb(230, 232, 237);
-        static readonly Color C_BTN_BORDER = Color.FromArgb(190, 195, 205);
-        static readonly Color C_TEXT_DARK  = Color.FromArgb(38, 42, 52);
-        static readonly Color C_TEXT_MID   = Color.FromArgb(90, 98, 115);
-        static readonly Color C_RED        = Color.FromArgb(200, 50, 50);
-        static readonly Color C_STEP_NUM   = Color.FromArgb(38, 42, 52);
-        static readonly Color C_DIAGRAM_BG = Color.FromArgb(250, 250, 252);
-
-        public RobotSafetyDoorPopup()
-        {
-            this.Text            = "Problem 111 – Robot Safety Door";
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.StartPosition   = FormStartPosition.CenterParent;
-            this.Size            = new Size(770, 600);
-            this.BackColor       = C_BODY_BG;
-            this.MinimumSize     = new Size(600, 480);
-
-            // Apply rounded corners
-            this.Load += (s, e) => ApplyRoundedCorners();
-
-            this.Paint += (s, e) => {
-                var g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                using var pen = new Pen(Color.FromArgb(100, 105, 120), 2f);
-                
-                // Draw rounded border
-                int r = 12;
-                using var path = new GraphicsPath();
-                path.AddArc(0, 0, r, r, 180, 90);
-                path.AddArc(this.Width - r - 1, 0, r, r, 270, 90);
-                path.AddArc(this.Width - r - 1, this.Height - r - 1, r, r, 0, 90);
-                path.AddArc(0, this.Height - r - 1, r, r, 90, 90);
-                path.CloseFigure();
-                g.DrawPath(pen, path);
-            };
-            Build();
-        }
-
-        void Build()
-        {
-            var header = new Panel { Dock = DockStyle.Top, Height = 46, BackColor = C_HEADER_BG };
-            var lblTitle = new Label {
-                Text      = "Problem: 111 \u2013 SHUT AND RESET ROBOT SAFETY DOOR",
-                Font      = new Font("Segoe UI", 10f, FontStyle.Bold),
-                ForeColor = Color.White,
-                AutoSize  = false, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft,
-                Padding   = new Padding(14, 0, 0, 0)
-            };
-            header.Controls.Add(lblTitle);
-
-            var btnBar = new Panel { Dock = DockStyle.Top, Height = 48, BackColor = C_BODY_BG, Padding = new Padding(12, 8, 12, 0) };
-            btnBar.Paint += (s, e) => {
-                using var pen = new Pen(Color.FromArgb(210, 214, 222), 1f);
-                e.Graphics.DrawLine(pen, 0, btnBar.Height - 1, btnBar.Width, btnBar.Height - 1);
-            };
-
-            var btnContinue = MakeActionButton("Continue", "\u25BA", Color.FromArgb(240, 248, 240), Color.FromArgb(40, 160, 70));
-            var btnIgnore   = MakeActionButton("Ignore",   "\u00D8", C_BTN_BG, C_TEXT_MID);
-            var btnAbort    = MakeActionButton("Abort",    "\u2715", C_BTN_BG, C_TEXT_MID);
-            var btnClose    = MakeActionButton("Close",    "\u25B6", C_BTN_BG, C_TEXT_MID);
-
-            btnClose.Text = "";
-            btnClose.Paint += (s, e) => {
-                var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-                DrawRunningPerson(g, new Rectangle(8, 4, 22, 26), C_TEXT_MID);
-                using var sf = new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center };
-                using var tb = new SolidBrush(C_TEXT_DARK);
-                g.DrawString("Close", new Font("Segoe UI", 9f), tb, new RectangleF(0, 0, btnClose.Width - 4, btnClose.Height), sf);
-            };
-
-            // Only the Close button works; others are disabled for the mockup
-            btnClose.Click    += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
-
-            int bx = 12;
-            foreach (var b in new[] { btnContinue, btnIgnore, btnAbort, btnClose }) {
-                b.Location = new Point(bx, 8); btnBar.Controls.Add(b); bx += b.Width + 6;
-            }
-
-            var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = C_BODY_BG, Padding = new Padding(20, 16, 20, 20) };
-            int y = 0;
-            int instructionW = 550;
-
-            // Helper to add instruction text
-            Action<string, int> AddInstruction = (text, top) => {
-                var lbl = new Label {
-                    Text = text,
-                    Font = new Font("Segoe UI", 8.5f, FontStyle.Italic),
-                    ForeColor = C_TEXT_MID,
-                    Location = new Point(24, top),
-                    Width = instructionW,
-                    AutoSize = true,
-                    MaximumSize = new Size(instructionW, 0)
-                };
-                scroll.Controls.Add(lbl);
-            };
-
-            var step1Label = MakeStepLabel(1, "Close the Robot safety door(s)");
-            step1Label.Location = new Point(0, y); scroll.Controls.Add(step1Label);
-            y += step1Label.PreferredHeight + 8;
-
-            var diagram1 = new Panel { Location = new Point(20, y), Size = new Size(310, 200), BackColor = C_DIAGRAM_BG };
-            diagram1.Paint += DrawDoorDiagram; scroll.Controls.Add(diagram1);
-            
-            AddInstruction("1. Ensure all three physical latches at the rear are engaged. The indicator on the main HMI panel should turn from flashing red to solid yellow once secured.", y + 205);
-            
-            y += diagram1.Height + 24;
-            y += 30; // space for instruction
-
-            var step2Label = MakeStepLabel(2, "Press the RESET button to reset to normal safety condition");
-            step2Label.Location = new Point(0, y); scroll.Controls.Add(step2Label);
-            y += step2Label.PreferredHeight + 8;
-
-            var diagram2 = new Panel { Location = new Point(20, y), Size = new Size(340, 90), BackColor = C_DIAGRAM_BG };
-            diagram2.Paint += DrawButtonPanel; scroll.Controls.Add(diagram2);
-            
-            AddInstruction("2. The green RESET button will illuminate when the safety circuit is ready. Press and hold for 2 seconds until the machine status updates to 'Standby'.", y + 95);
-
-            y += diagram2.Height + 20;
-            y += 30; // space for instruction
-
-            scroll.AutoScrollMinSize = new Size(0, y + 30);
-            this.Controls.Add(scroll); this.Controls.Add(btnBar); this.Controls.Add(header);
-        }
-
-        void ApplyRoundedCorners()
-        {
-            int r = 12;
-            using var path = new GraphicsPath();
-            path.AddArc(0, 0, r, r, 180, 90);
-            path.AddArc(this.Width - r, 0, r, r, 270, 90);
-            path.AddArc(this.Width - r, this.Height - r, r, r, 0, 90);
-            path.AddArc(0, this.Height - r, r, r, 90, 90);
-            path.CloseFigure();
-            this.Region = new Region(path);
-        }
-
-        Button MakeActionButton(string text, string icon, Color bg, Color iconColor)
-        {
-            var btn = new Button {
-                Text = $"  {icon}  {text}", Font = new Font("Segoe UI", 9f), ForeColor = C_TEXT_DARK,
-                BackColor = bg, FlatStyle = FlatStyle.Flat, Size = new Size(110, 32), Cursor = Cursors.Hand,
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            btn.FlatAppearance.BorderColor = C_BTN_BORDER;
-            btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(Math.Min(255, bg.R + 15), Math.Min(255, bg.G + 15), Math.Min(255, bg.B + 15));
-            return btn;
-        }
-
-        Label MakeStepLabel(int stepNum, string text)
-        {
-            var lbl = new Label { AutoSize = true, MaximumSize = new Size(700, 0), Font = new Font("Segoe UI", 10f), ForeColor = C_TEXT_DARK };
-            lbl.Paint += (s, e) => {
-                var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-                using var bf = new Font("Segoe UI", 10f, FontStyle.Bold);
-                using var nf = new Font("Segoe UI", 10f);
-                using var br = new SolidBrush(C_STEP_NUM);
-                string num = $"{stepNum}.   ";
-                g.DrawString(num, bf, br, 0, 0);
-                float w = g.MeasureString(num, bf).Width;
-                g.DrawString(text, nf, br, w, 0);
-            };
-            using var g2 = lbl.CreateGraphics();
-            using var bf2 = new Font("Segoe UI", 10f, FontStyle.Bold);
-            using var nf2 = new Font("Segoe UI", 10f);
-            string n = $"{stepNum}.   ";
-            float nw = g2.MeasureString(n, bf2).Width;
-            SizeF sz = g2.MeasureString(text, nf2, (int)(700 - nw));
-            lbl.Size = new Size((int)(nw + sz.Width + 4), (int)sz.Height + 4); lbl.Text = "";
-            return lbl;
-        }
-
-        void DrawDoorDiagram(object? sender, PaintEventArgs e)
-        {
-            if (sender is not Panel p) return;
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-            using var bgBr = new SolidBrush(C_DIAGRAM_BG); g.FillRectangle(bgBr, 0, 0, p.Width, p.Height);
-            using var redPen = new Pen(C_RED, 1.5f); using var darkPen = new Pen(Color.FromArgb(60, 65, 80), 1.2f);
-            using var thinPen = new Pen(Color.FromArgb(130, 135, 148), 0.8f);
-            using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-            using var darkBrush = new SolidBrush(C_TEXT_DARK);
-
-            int padX = 30, innerL = padX, innerR = p.Width - padX, innerW = innerR - innerL;
-            int doorY = 50, doorH = 30;
-            int[] dxs = { innerL + innerW / 6, innerL + innerW / 2, innerL + 5 * innerW / 6 };
-
-            var lblR = new RectangleF(innerR - 85, 10, 80, 32);
-            using var lblBr = new SolidBrush(Color.FromArgb(245, 246, 248)); g.FillRectangle(lblBr, lblR);
-            using var lblP = new Pen(C_RED, 1f); g.DrawRectangle(lblP, lblR.X, lblR.Y, lblR.Width, lblR.Height);
-            using var lblF = new Font("Segoe UI", 6f, FontStyle.Bold);
-            using var redB = new SolidBrush(C_RED); g.DrawString("ROBOT SAFETY\nDOORS (X3)", lblF, redB, lblR, sf);
-
-            g.DrawLine(redPen, innerL, doorY, innerR, doorY);
-            foreach (int dx in dxs) {
-                int sz = 14; g.DrawLine(redPen, dx - sz, doorY, dx + sz, doorY + doorH);
-                g.DrawLine(redPen, dx + sz, doorY, dx - sz, doorY + doorH);
-                if (dx == dxs[2]) g.DrawLine(thinPen, dx + sz, doorY + doorH / 2, (int)lblR.X, (int)(lblR.Y + lblR.Height / 2));
-            }
-            using var sF = new Font("Segoe UI", 7f);
-            g.DrawString("REAR (ROBOT SIDE)", sF, darkBrush, new RectangleF(innerL, doorY + doorH + 2, innerW, 16), sf);
-
-            var fR = new Rectangle(innerL + 20, doorY + doorH + 22, innerW - 40, p.Height - doorY - doorH - 72);
-            using var wB = new SolidBrush(Color.White); g.FillRectangle(wB, fR); g.DrawRectangle(darkPen, fR);
-            g.DrawString("FRONT (CARTRIDGE LOADING SIDE)", sF, darkBrush, new RectangleF(innerL, fR.Bottom + 4, innerW, 16), sf);
-        }
-
-        void DrawButtonPanel(object? sender, PaintEventArgs e)
-        {
-            if (sender is not Panel p) return;
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-            var pR = new Rectangle(4, 8, 200, 70);
-            using var hB = new SolidBrush(Color.FromArgb(50, 52, 58));
-            using var hP = new Pen(Color.FromArgb(30, 32, 38), 1.5f);
-            g.FillRectangle(hB, pR); g.DrawRectangle(hP, pR);
-            using var iB = new SolidBrush(Color.FromArgb(65, 68, 76));
-            g.FillRectangle(iB, new Rectangle(pR.X + 6, pR.Y + 8, pR.Width - 12, pR.Height - 16));
-
-            var btns = new[] {
-                (24,  Color.FromArgb(220, 40, 40),  "EMO"),
-                (58,  Color.FromArgb(220, 160, 30), "DOOR OPEN"),
-                (88,  Color.FromArgb(60, 180, 60),  "RESET"),
-                (118, Color.FromArgb(30, 80, 180),  "PAUSE"),
-                (148, Color.FromArgb(60, 180, 60),  "START"),
-            };
-            using var lF = new Font("Segoe UI", 5f); using var wB = new SolidBrush(Color.White);
-            foreach (var (bx, col, name) in btns) {
-                int cx = pR.X + bx, cy = pR.Y + pR.Height / 2, r = name == "EMO" ? 14 : 10;
-                if (name == "RESET") {
-                    using var cP = new Pen(C_RED, 1.5f); g.DrawRectangle(cP, cx - r - 3, cy - r - 3, r * 2 + 6, r * 2 + 6);
-                }
-                using var bB = new SolidBrush(col); g.FillEllipse(bB, cx - r, cy - r, r * 2, r * 2);
-                using var gl = new LinearGradientBrush(new PointF(cx - r, cy - r), new PointF(cx, cy + r / 2), Color.FromArgb(80, 255, 255, 255), Color.FromArgb(0, 255, 255, 255));
-                g.FillEllipse(gl, cx - r, cy - r, r * 2, r);
-                using var sf = new StringFormat { Alignment = StringAlignment.Center };
-                g.DrawString(name, lF, wB, new RectangleF(cx - 22, pR.Bottom + 2, 44, 12), sf);
-            }
-            int rcx = pR.X + 88, rcy = pR.Y + pR.Height / 2, asx = rcx + 14, aex = pR.Right + 30;
-            using var aP = new Pen(C_RED, 1.5f); g.DrawLine(aP, asx, rcy, aex, rcy);
-            g.FillPolygon(new SolidBrush(C_RED), new PointF[] { new(aex, rcy), new(aex - 7, rcy - 4), new(aex - 7, rcy + 4) });
-            var tB = new RectangleF(aex + 4, rcy - 14, 80, 28);
-            using var tbB = new SolidBrush(Color.FromArgb(245, 246, 248)); g.FillRectangle(tbB, tB);
-            using var tbP = new Pen(C_RED, 1f); g.DrawRectangle(tbP, tB.X, tB.Y, tB.Width, tB.Height);
-            using var tbF = new Font("Segoe UI", 7.5f, FontStyle.Bold); using var tbT = new SolidBrush(C_TEXT_DARK);
-            using var sfC = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-            g.DrawString("RESET\nBUTTON", tbF, tbT, tB, sfC);
-        }
-
-        static void DrawRunningPerson(Graphics g, Rectangle r, Color col)
-        {
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            using var pen = new Pen(col, 1.5f); using var br = new SolidBrush(col);
-            float cx = r.X + r.Width / 2f, top = r.Y;
-            g.FillEllipse(br, cx - 4, top, 8, 8);
-            g.DrawLine(pen, cx, top + 8, cx - 3, top + 17);
-            g.DrawLine(pen, cx, top + 12, cx - 7, top + 9);
-            g.DrawLine(pen, cx, top + 12, cx + 5, top + 15);
-            g.DrawLine(pen, cx - 3, top + 17, cx + 4, top + 24);
-            g.DrawLine(pen, cx - 3, top + 17, cx - 8, top + 24);
         }
     }
 }
